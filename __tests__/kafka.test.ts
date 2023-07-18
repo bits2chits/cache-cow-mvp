@@ -3,18 +3,29 @@ import {uuidV4} from "web3-utils"
 
 const TEST_TOPIC = 'test-topic'
 
+let consumer, producer
+
 describe('Tests Kafka', () => {
-  beforeEach((): void => {
-    jest.setTimeout(100000);
-  });
+  beforeEach(async (): Promise<void> => {
+    jest.setTimeout(100000)
+    await consumer.stop()
+  })
+  beforeAll(async () => {
+    producer = createProducer()
+    // await producer.connect()
+    consumer = createConsumer({groupId: 'test-group'})
+    await consumer.connect()
+    await consumer.subscribe({topic: TEST_TOPIC, fromBeginning: true})
+  })
+  afterAll(async () => {
+    await producer.disconnect()
+    await consumer.disconnect()
+  })
   it('should connect to broker', async () => {
-    const producer = createProducer()
     await expect(producer.connect()).resolves.not.toThrow()
   })
   it('should produce a kafka message', async () => {
     const messageValue = uuidV4()
-    const producer = createProducer()
-    await producer.connect()
     await producer.send({
       topic: TEST_TOPIC,
       messages: [{
@@ -22,12 +33,25 @@ describe('Tests Kafka', () => {
       }]
     })
 
-    const consumer = createConsumer({groupId: 'test-group'})
-    await consumer.connect()
-    await consumer.subscribe({topic: TEST_TOPIC, fromBeginning: true})
     await consumer.run({
       eachMessage: async ({message}) => {
-        console.log(message.value)
+        expect(message.value).toEqual(messageValue)
+      }
+    })
+  })
+  it('should produce many kafka messages', async () => {
+    const messages: { value: string, processed?: boolean }[] = new Array(Math.floor(Math.random() * 100)).fill({}).map((() => ({ value: uuidV4() })))
+    await producer.send({
+      topic: TEST_TOPIC,
+      messages
+    })
+
+    await consumer.run({
+      eachMessage: async ({message}) => {
+        const index = messages.findIndex((m) => m.value === message)
+        expect(index).toBeGreaterThan(-1)
+        expect(!!messages[index].processed).toBeFalsy()
+        messages[index].processed = true
       }
     })
   })
