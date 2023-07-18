@@ -36,6 +36,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@types/jest": "^29.5.2",
+    "kafkajs": "^2.2.4",
     "tslib": "~2.5",
     "web3": "^4.0.2",
     "web3-utils": "^4.0.2"
