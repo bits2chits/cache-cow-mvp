@@ -55,4 +55,5 @@ describe('Tests Kafka', () => {
       }
     })
   })
+  // not sure how important it is to test the kafka packages abilities, but if we want we could test multiple topics here as well
 });
