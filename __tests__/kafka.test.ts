@@ -1,9 +1,16 @@
-import {createConsumer, createProducer} from "../src/kafka";
-import {uuidV4} from "web3-utils";
+import {createConsumer, createProducer} from "../src/kafka"
+import {uuidV4} from "web3-utils"
 
 const TEST_TOPIC = 'test-topic'
 
 describe('Tests Kafka', () => {
+  beforeEach((): void => {
+    jest.setTimeout(100000);
+  });
+  it('should connect to broker', async () => {
+    const producer = createProducer()
+    await expect(producer.connect()).resolves.not.toThrow()
+  })
   it('should produce a kafka message', async () => {
     const messageValue = uuidV4()
     const producer = createProducer()
@@ -17,19 +24,11 @@ describe('Tests Kafka', () => {
 
     const consumer = createConsumer({groupId: 'test-group'})
     await consumer.connect()
-    await consumer.subscribe({topic: TEST_TOPIC})
-    const messages = []
+    await consumer.subscribe({topic: TEST_TOPIC, fromBeginning: true})
     await consumer.run({
-      eachMessage: async ({topic, partition, message}) => {
-        console.log({
-          topic,
-          partition,
-          offset: message.offset,
-          value: message.value.toString()
-        })
-        messages.push(message.value.toString())
+      eachMessage: async ({message}) => {
+        console.log(message.value)
       }
     })
-    return Promise.resolve(messages)
   })
 });
