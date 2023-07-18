@@ -1,59 +1,83 @@
-import {createConsumer, createProducer} from "../src/kafka"
+import {jest} from '@jest/globals'
 import {uuidV4} from "web3-utils"
+import {createAdmin, createConsumer, createProducer} from "../src/kafka"
+import {Admin, Consumer, Producer, Message, KafkaMessage} from "kafkajs"
+import {sleep} from "../src/libs/sleep"
 
-const TEST_TOPIC = 'test-topic'
-
-let consumer, producer
+jest.setTimeout(100000)
 
 describe('Tests Kafka', () => {
-  beforeEach(async (): Promise<void> => {
-    jest.setTimeout(100000)
-    await consumer.stop()
-  })
+  let producer: Producer
+  let consumer: Consumer
+  let admin: Admin
+  let testTopic: string
+
   beforeAll(async () => {
-    producer = createProducer()
-    // await producer.connect()
-    consumer = createConsumer({groupId: 'test-group'})
+    testTopic = uuidV4()
+    // initialize admin
+    admin = await createAdmin()
+    await admin.connect()
+    await admin.createTopics({
+      topics: [{topic: testTopic}],
+      waitForLeaders: false
+    })
+    // initialize producer
+    producer = await createProducer()
+    await producer.connect()
+    // initialize consumer
+    consumer = await createConsumer({groupId: uuidV4()})
     await consumer.connect()
-    await consumer.subscribe({topic: TEST_TOPIC, fromBeginning: true})
+    await consumer.subscribe({topic: testTopic, fromBeginning: true})
   })
   afterAll(async () => {
-    await producer.disconnect()
-    await consumer.disconnect()
+    await producer?.disconnect()
+    await consumer?.disconnect()
+    await admin.deleteTopics({topics: [testTopic]})
+    await admin.disconnect()
   })
-  it('should connect to broker', async () => {
-    await expect(producer.connect()).resolves.not.toThrow()
+  afterEach(async () => {
+    await consumer.stop()
   })
   it('should produce a kafka message', async () => {
     const messageValue = uuidV4()
+    const consumedMessages: KafkaMessage[] = []
+    await consumer.run({
+      eachMessage: async ({message}) => {
+        consumedMessages.push(message)
+      }
+    })
     await producer.send({
-      topic: TEST_TOPIC,
+      topic: testTopic,
       messages: [{
         value: messageValue
       }]
     })
 
-    await consumer.run({
-      eachMessage: async ({message}) => {
-        expect(message.value).toEqual(messageValue)
-      }
-    })
+    while (consumedMessages.length < 1) {
+      await sleep(100)
+    }
+    expect(consumedMessages.map(({value}) => value.toString())).toContain(messageValue)
   })
   it('should produce many kafka messages', async () => {
-    const messages: { value: string, processed?: boolean }[] = new Array(Math.floor(Math.random() * 100)).fill({}).map((() => ({ value: uuidV4() })))
-    await producer.send({
-      topic: TEST_TOPIC,
-      messages
-    })
+    const numberOfMessages = Math.floor(Math.random() * 100)
+    const producedMessages: Message[] = new Array(numberOfMessages).fill({}).map(() => ({value: uuidV4()}))
+    const consumedMessages: KafkaMessage[] = []
 
     await consumer.run({
       eachMessage: async ({message}) => {
-        const index = messages.findIndex((m) => m.value === message)
-        expect(index).toBeGreaterThan(-1)
-        expect(!!messages[index].processed).toBeFalsy()
-        messages[index].processed = true
+        consumedMessages.push(message)
       }
     })
+    await producer.send({
+      topic: testTopic,
+      messages: producedMessages
+    })
+
+    while (consumedMessages.length < producedMessages.length) {
+      await sleep(100)
+    }
+    expect(consumedMessages.length).toBeGreaterThanOrEqual(numberOfMessages)
+    expect(producedMessages.map(({value}) => value))
+      .toStrictEqual(consumedMessages.map(({value}) => value.toString()))
   })
-  // not sure how important it is to test the kafka packages abilities, but if we want we could test multiple topics here as well
 });
