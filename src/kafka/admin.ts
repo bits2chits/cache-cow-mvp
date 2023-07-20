@@ -1,11 +1,13 @@
 import {Web3} from "web3"
 import {Admin} from "kafkajs"
-import {createAdmin} from "./index"
+import {KafkaService, KafkaServiceInstance} from "./index"
 
 export class KafkaAdmin {
+  kafkaService: KafkaService
   admin: Admin
 
-  constructor() {
+  constructor(kafkaService: KafkaService) {
+    this.kafkaService = kafkaService
     process.on('exit', async () => {
       await this.admin?.disconnect()
     })
@@ -13,7 +15,7 @@ export class KafkaAdmin {
 
   async getInstance(): Promise<Admin> {
     if (!this.admin) {
-      this.admin = await createAdmin()
+      this.admin = await this.kafkaService.createAdmin()
       await this.admin.connect()
     }
     return this.admin
@@ -65,7 +67,7 @@ export class KafkaAdmin {
   }
 }
 
-export const KafkaAdminInstance: KafkaAdmin = new KafkaAdmin()
+export const KafkaAdminInstance: KafkaAdmin = new KafkaAdmin(KafkaServiceInstance)
 
 
 
