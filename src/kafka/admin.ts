@@ -1,8 +1,8 @@
-import {createAdmin} from "./index"
 import {Web3} from "web3"
 import {Admin} from "kafkajs"
+import {createAdmin} from "./index"
 
-class KafkaAdmin {
+export class KafkaAdmin {
   admin: Admin
 
   constructor() {
@@ -11,7 +11,7 @@ class KafkaAdmin {
     })
   }
 
-  async getAdminInstance(): Promise<Admin> {
+  async getInstance(): Promise<Admin> {
     if (!this.admin) {
       this.admin = await createAdmin()
       await this.admin.connect()
@@ -26,7 +26,7 @@ class KafkaAdmin {
   }
 
   async createTopic(topic: string): Promise<void> {
-    const admin = await this.getAdminInstance()
+    const admin = await this.getInstance()
     const topics = await admin.listTopics()
     if (!topics.includes(topic)) {
       await admin.createTopics({
@@ -49,14 +49,14 @@ class KafkaAdmin {
   }
 
   async deleteTopic(topic: string): Promise<void> {
-    const admin = await this.getAdminInstance()
+    const admin = await this.getInstance()
     await admin.deleteTopics({
       topics: [topic]
     })
   }
 
   async listTopics(): Promise<string[]> {
-    const admin = await this.getAdminInstance()
+    const admin = await this.getInstance()
     return admin.listTopics()
   }
 
@@ -65,7 +65,7 @@ class KafkaAdmin {
   }
 }
 
-export const kafkaAdminInstance: KafkaAdmin = new KafkaAdmin()
+export const KafkaAdminInstance: KafkaAdmin = new KafkaAdmin()
 
 
 

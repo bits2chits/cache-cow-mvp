@@ -1,10 +1,11 @@
 import {jest} from '@jest/globals'
 import {uuidV4} from "web3-utils"
 import {Web3} from "web3"
-import {Producer, Message, KafkaMessage} from "kafkajs"
-import {createConsumer, createProducer} from "../src/kafka"
-import {kafkaAdminInstance} from "../src/kafka/admin"
+import {Message, KafkaMessage} from "kafkajs"
+import {KafkaAdminInstance} from "../src/kafka/admin"
 import {sleep} from "../src/libs/sleep"
+import {ConsumerFactory} from "../src/kafka/consumer"
+import {ProducerFactory} from "../src/kafka/producer"
 
 jest.setTimeout(100000)
 
@@ -12,33 +13,26 @@ function messageToString(m: Message | KafkaMessage): string {
   return m.value.toString()
 }
 describe('Tests Kafka', () => {
-  let producer: Producer
   let testTopic: string
 
   beforeAll(async () => {
     testTopic = uuidV4()
-    await kafkaAdminInstance.createTopic(testTopic)
-    // initialize producer
-    producer = await createProducer()
-    await producer.connect()
-
+    await KafkaAdminInstance.createTopic(testTopic)
   })
   afterAll(async () => {
-    await producer?.disconnect()
-    await kafkaAdminInstance.deleteTopic(testTopic)
-    await kafkaAdminInstance.disconnect()
+    await KafkaAdminInstance.deleteTopic(testTopic)
+    await KafkaAdminInstance.disconnect()
   })
   it('should produce a kafka message', async () => {
     const messageValue = uuidV4()
     const consumedMessages: KafkaMessage[] = []
-    const consumer = await createConsumer({groupId: uuidV4()})
-    await consumer.connect()
-    await consumer.subscribe({topic: testTopic})
+    const consumer = await ConsumerFactory.getConsumer({topics: [testTopic]}, {groupId: uuidV4()})
     await consumer.run({
       eachMessage: async ({message}) => {
         consumedMessages.push(message)
       }
     })
+    const producer = await ProducerFactory.getProducer()
     await producer.send({
       topic: testTopic,
       messages: [{
@@ -52,19 +46,19 @@ describe('Tests Kafka', () => {
     }
     expect(consumedMessages.map(({value}) => value.toString())).toContain(messageValue)
     await consumer.disconnect()
+    await producer.disconnect()
   })
   it('should produce many kafka messages', async () => {
     const numberOfMessages = Math.floor(Math.random() * 100)
     const producedMessages: Message[] = new Array(numberOfMessages).fill({}).map(() => ({key: uuidV4(), value: uuidV4()}))
     const consumedMessages: KafkaMessage[] = []
-    const consumer = await createConsumer({groupId: uuidV4()})
-    await consumer.connect()
-    await consumer.subscribe({topic: testTopic})
+    const consumer = await ConsumerFactory.getConsumer({topics: [testTopic]}, {groupId: uuidV4()})
     await consumer.run({
       eachMessage: async ({message}) => {
         consumedMessages.push(message)
       }
     })
+    const producer = await ProducerFactory.getProducer()
     await producer.send({
       topic: testTopic,
       messages: producedMessages
@@ -76,13 +70,14 @@ describe('Tests Kafka', () => {
     expect(consumedMessages.length).toEqual(numberOfMessages)
     expect(producedMessages.map(messageToString)).toStrictEqual(consumedMessages.map(messageToString))
     await consumer.disconnect()
+    await producer.disconnect()
   })
   it('should crate a topic from event signature', async () => {
     const eventSignature = 'Event(uint256)'
     const eventHash = (new Web3()).eth.abi.encodeEventSignature(eventSignature)
-    await kafkaAdminInstance.createTopicFromEventSignature(eventSignature)
-    const topics = await kafkaAdminInstance.listTopics()
+    await KafkaAdminInstance.createTopicFromEventSignature(eventSignature)
+    const topics = await KafkaAdminInstance.listTopics()
     expect(topics).toContain(eventHash)
-    await kafkaAdminInstance.deleteTopic(eventHash)
+    await KafkaAdminInstance.deleteTopic(eventHash)
   })
 });
