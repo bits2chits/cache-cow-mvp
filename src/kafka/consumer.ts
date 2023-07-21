@@ -1,23 +1,22 @@
 import {Consumer, ConsumerConfig, ConsumerSubscribeTopics, ConsumerRunConfig} from "kafkajs"
-import {createConsumer} from "./index"
+import {KafkaService, KafkaServiceInstance} from "./index"
 
 export class KafkaConsumer {
+  kafkaService: KafkaService
   subscriptionConfig: ConsumerSubscribeTopics
   config?: ConsumerConfig
   consumer: Consumer
 
-  constructor() {
+  constructor(kafkaService: KafkaService) {
+    this.kafkaService = kafkaService
     process.on('exit', async () => {
       await this.consumer?.disconnect()
     })
   }
 
   async getInstance(): Promise<Consumer> {
-    if (!this.subscriptionConfig) {
-      throw new Error("Invalid state: 'subscriptionConfig' has not been assigned. Did you initialize the consumer first?")
-    }
     if (!this.consumer) {
-      this.consumer = await createConsumer(this.config)
+      this.consumer = await this.kafkaService.createConsumer(this.config)
       await this.consumer.connect()
       await this.consumer.subscribe(this.subscriptionConfig)
     }
@@ -42,7 +41,7 @@ export class KafkaConsumer {
 
 class KafkaConsumerFactory {
   async getConsumer(subscriptionConfig: ConsumerSubscribeTopics, consumerConfig?: ConsumerConfig): Promise<KafkaConsumer> {
-    const consumer = new KafkaConsumer()
+    const consumer = new KafkaConsumer(KafkaServiceInstance)
     await consumer.initialize(subscriptionConfig, consumerConfig)
     return consumer
   }

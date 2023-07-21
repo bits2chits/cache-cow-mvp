@@ -1,11 +1,13 @@
 import {Producer, ProducerBatch, ProducerConfig, ProducerRecord, RecordMetadata} from "kafkajs"
-import {createProducer} from "./index"
+import {KafkaService, KafkaServiceInstance} from "./index"
 
 export class KafkaProducer {
+  kafkaService: KafkaService
   config?: ProducerConfig
   producer: Producer
 
-  constructor(config?: ProducerConfig) {
+  constructor(kafkaService: KafkaService, config?: ProducerConfig) {
+    this.kafkaService = kafkaService
     this.config = config
     process.on('exit', async () => {
       await this.producer?.disconnect()
@@ -14,7 +16,7 @@ export class KafkaProducer {
 
   async getInstance(): Promise<Producer> {
     if (!this.producer) {
-      this.producer = await createProducer(this.config)
+      this.producer = await this.kafkaService.createProducer(this.config)
       await this.producer.connect()
     }
     return this.producer
@@ -40,7 +42,7 @@ export class KafkaProducer {
 
 class KafkaProducerFactory {
   async getProducer(producerConfig?: ProducerConfig): Promise<KafkaProducer> {
-    const producer = new KafkaProducer(producerConfig)
+    const producer = new KafkaProducer(KafkaServiceInstance, producerConfig)
     await producer.initialize()
     return producer
   }
