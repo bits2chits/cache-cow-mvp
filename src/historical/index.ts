@@ -1,6 +1,7 @@
 // import UniswapFactoryAbi from "../abis/uniswap-factory.json"
 import {KafkaAdmin} from "../kafka/admin"
-import {Log, Web3} from "web3"
+import {Filter, Log, Web3} from "web3"
+import {sleep} from "../libs/sleep"
 
 
 // This won't exist in code for long, so no need to make any config files.
@@ -16,7 +17,7 @@ interface UniswapFactoryMetadata {
   chain: string
 }*/
 
-class UniswapFactoryObserver {
+export class UniswapFactoryObserver {
   admin: KafkaAdmin
   web3: Web3
   initialized: boolean
@@ -45,23 +46,30 @@ class UniswapFactoryObserver {
     }
   }
 
-  logTopicIsObserved(topic: string): boolean {
+  async logTopicIsObserved(topic: string): Promise<boolean> {
+    while (!this.initialized) {
+      await sleep(100)
+    }
     return this.observedTopics.has(topic)
   }
 
+  async getPastLogs(filter: Filter): Promise<Log[]> {
+    return await this.web3.eth.getPastLogs(filter) as Log[]
+  }
   async scanForUniswapFactories(startBlock: number, endBlock: number): Promise<void> {
+    while (!this.initialized) {
+      await sleep(100)
+    }
     for (let i = startBlock; i < endBlock; i+= 500) {
-      const logs = await this.web3.eth.getPastLogs({
+      const logs = await this.getPastLogs({
         fromBlock: i,
         toBlock: i + 500,
         topics: Array.of(...this.observedTopics)
-      }) as Log[]
+      })
 
       for (const log of logs) {
         await this.addAddress(log.address)
       }
     }
   }
-
-
 }

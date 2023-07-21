@@ -15,9 +15,6 @@ export class KafkaConsumer {
   }
 
   async getInstance(): Promise<Consumer> {
-    if (!this.subscriptionConfig) {
-      throw new Error("Invalid state: 'subscriptionConfig' has not been assigned. Did you initialize the consumer first?")
-    }
     if (!this.consumer) {
       this.consumer = await this.kafkaService.createConsumer(this.config)
       await this.consumer.connect()

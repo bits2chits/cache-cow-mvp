@@ -6,6 +6,7 @@ import {KafkaAdminInstance} from "../src/kafka/admin"
 import {sleep} from "../src/libs/sleep"
 import {ConsumerFactory} from "../src/kafka/consumer"
 import {ProducerFactory} from "../src/kafka/producer"
+import {RPCS} from "../src/enums/rpcs"
 
 jest.setTimeout(100000)
 
@@ -59,9 +60,11 @@ describe('Tests Kafka', () => {
       }
     })
     const producer = await ProducerFactory.getProducer()
-    await producer.send({
-      topic: testTopic,
-      messages: producedMessages
+    await producer.sendBatch({
+      topicMessages: [{
+        topic: testTopic,
+        messages: producedMessages
+      }]
     })
 
     while (consumedMessages.length < producedMessages.length) {
@@ -74,7 +77,7 @@ describe('Tests Kafka', () => {
   })
   it('should crate a topic from event signature', async () => {
     const eventSignature = 'Event(uint256)'
-    const eventHash = (new Web3()).eth.abi.encodeEventSignature(eventSignature)
+    const eventHash = (new Web3(RPCS.POLYGON)).eth.abi.encodeEventSignature(eventSignature)
     await KafkaAdminInstance.createTopicFromEventSignature(eventSignature)
     const topics = await KafkaAdminInstance.listTopics()
     expect(topics).toContain(eventHash)
