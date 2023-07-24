@@ -96,7 +96,11 @@ export class UniswapFactoryObserver {
         topic: SYSTEM_EVENTS.UNISWAP_LP_POOL_ADDED,
         messages: [{
           key: log.address,
-          value: JSON.stringify(log)
+          value: JSON.stringify(log,  (_, value) =>
+            typeof value === 'bigint'
+              ? value.toString()
+              : value
+          )
         }]
       })
       console.info(`Added topic ${log.address} to kafka. Existing topics: ${Array.of(...this.existingUniswapAddresses)}`)
