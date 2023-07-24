@@ -1,8 +1,10 @@
-// import UniswapFactoryAbi from "../abis/uniswap-factory.json"
-import {KafkaAdmin} from "../kafka/admin"
+import fs from "fs"
+import {clearInterval} from "timers"
 import {Filter, Log, Web3} from "web3"
 import {sleep} from "../libs/sleep"
-import fs from "fs"
+import {KafkaAdmin} from "../kafka/admin"
+import {KafkaProducer} from "../kafka/producer"
+import {SYSTEM_EVENTS} from "../kafka";
 
 
 // This won't exist in code for long, so no need to make any config files.
@@ -19,6 +21,7 @@ interface UniswapFactoryMetadata {
 }*/
 
 export class UniswapFactoryObserver {
+  producer: KafkaProducer
   admin: KafkaAdmin
   web3: Web3
   initialized: boolean
@@ -27,7 +30,13 @@ export class UniswapFactoryObserver {
   existingUniswapAddresses: Set<string>
   observedTopics: Set<string>
 
-  constructor(admin: KafkaAdmin, web3: Web3, config: string[] = eventSignaturesObserved) {
+  constructor(
+    producer: KafkaProducer,
+    admin: KafkaAdmin,
+    web3: Web3,
+    config: string[] = eventSignaturesObserved,
+  ) {
+    this.producer = producer
     this.admin = admin
     this.web3 = web3
     this.initialize(config)
@@ -36,11 +45,7 @@ export class UniswapFactoryObserver {
       })
       .catch(console.error)
     process.on('SIGINT', () => {
-      fs.writeFileSync("uniswapFactoryObserver.state.json", JSON.stringify({
-        existingUniswapAddresses: this.existingUniswapAddresses ? Array.of(...this.existingUniswapAddresses) : [],
-        observedTopics: this.observedTopics ? Array.of(...this.observedTopics) : [],
-        lastBlockChecked: this.lastBlockChecked || 0
-      }, null, 2))
+      this.shutdown()
     })
   }
 
@@ -54,7 +59,12 @@ export class UniswapFactoryObserver {
 
   async initialize(config: string[]): Promise<void> {
     this.observedTopics = new Set(config.map(this.web3.eth.abi.encodeEventSignature))
-    this.existingUniswapAddresses = new Set(await this.admin.listTopics())
+    const topics = (await this.admin.listTopics())
+    console.info(`Initialized observer with topics: ${topics}`)
+    this.existingUniswapAddresses = new Set(topics.filter((topic) => !topic.startsWith("__") && !topic.includes(".")))
+    if (!topics.includes(SYSTEM_EVENTS.UNISWAP_LP_POOL_ADDED)) {
+      await this.admin.createTopic(SYSTEM_EVENTS.UNISWAP_LP_POOL_ADDED)
+    }
     this.logInterval = setInterval(() => this.logState(), 1000)
     this.initialized = true
   }
@@ -65,11 +75,31 @@ export class UniswapFactoryObserver {
     }
   }
 
-  async addAddress(address: string): Promise<void> {
-    if (!this.existingUniswapAddresses.has(address)) {
-      await this.admin.createTopic(address)
-      this.existingUniswapAddresses.add(address)
-      console.info(`Added topic ${address} to kafka. Existing topics: ${Array.of(...this.existingUniswapAddresses)}`)
+  shutdown(): void {
+    if (this.initialized) {
+      fs.writeFileSync("uniswapFactoryObserver.state.json",
+        JSON.stringify({
+          existingUniswapAddresses: this.existingUniswapAddresses ? Array.of(...this.existingUniswapAddresses) : [],
+          observedTopics: this.observedTopics ? Array.of(...this.observedTopics) : [],
+          lastBlockChecked: this.lastBlockChecked || 0
+        }, null, 2)
+      )
+      clearInterval(this.logInterval)
+    }
+  }
+
+  async addAddress(log: Log): Promise<void> {
+    if (!this.existingUniswapAddresses.has(log.address)) {
+      await this.admin.createTopic(log.address)
+      this.existingUniswapAddresses.add(log.address)
+      await this.producer.send({
+        topic: SYSTEM_EVENTS.UNISWAP_LP_POOL_ADDED,
+        messages: [{
+          key: log.address,
+          value: JSON.stringify(log)
+        }]
+      })
+      console.info(`Added topic ${log.address} to kafka. Existing topics: ${Array.of(...this.existingUniswapAddresses)}`)
     }
   }
 
@@ -81,10 +111,11 @@ export class UniswapFactoryObserver {
   async getPastLogs(filter: Filter): Promise<Log[]> {
     return await this.web3.eth.getPastLogs(filter) as Log[]
   }
+
   async scanForUniswapFactories(startBlock: number, endBlock: number): Promise<void> {
     await this.initialization()
 
-    for (let i = startBlock; i < endBlock; i+= 500) {
+    for (let i = startBlock; i < endBlock; i += 500) {
       this.lastBlockChecked = i
       const logs = await this.getPastLogs({
         fromBlock: i,
@@ -93,7 +124,7 @@ export class UniswapFactoryObserver {
       })
 
       for (const log of logs) {
-        await this.addAddress(log.address)
+        await this.addAddress(log)
       }
     }
   }

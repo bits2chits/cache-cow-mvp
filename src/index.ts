@@ -9,12 +9,13 @@ async function processHistoricalEvents(): Promise<void> {
   const blockNumber = await web3.eth.getBlockNumber()
   const uniswapFactoryObserver = new UniswapFactoryObserver(KafkaAdminInstance, web3, uniswapState.existingUniswapAddresses)
   await uniswapFactoryObserver.scanForUniswapFactories(uniswapState.lastBlockChecked, Number(blockNumber.toString()))
+    .then(() => console.info("Done processing historical events"))
+    .catch(console.error)
+    .finally(() => uniswapFactoryObserver.shutdown())
 }
 
 async function main(): Promise<void> {
   await processHistoricalEvents()
-    .then(() => console.info("Done processing historical events"))
-    .catch(console.error)
 }
 
 main()
