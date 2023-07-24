@@ -1,3 +1,4 @@
+
 import {Web3} from "web3"
 import {RPCS} from "./enums/rpcs"
 import {UniswapFactoryObserver} from "./historical"
@@ -21,7 +22,7 @@ async function processHistoricalEvents(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  await processHistoricalEvents()
+    await processHistoricalEvents()
 }
 
 main()

@@ -1,7 +1,8 @@
-import { MATIC_USDC } from '../src/enums/pairs';
-import { fetchBlockNumber } from '../src/main';
+
+import { MATIC_USDC } from '../src/enums/pairs'
+import { fetchBlockNumber } from '../src/main'
 import { Web3 } from 'web3'
-import { poll } from '../src/poller';
+import { poll } from '../src/poller'
 
 describe('Tests poller', () => {
   const web3 = new Web3(MATIC_USDC.RPC)
