@@ -126,15 +126,20 @@ export class UniswapFactoryObserver {
     await this.initialization()
 
     for (let i = startBlock; i < endBlock; i += 500) {
-      this.lastBlockChecked = i
-      const logs = await this.getPastLogs({
-        fromBlock: i,
-        toBlock: i + 500,
-        topics: Array.of(...this.observedTopics)
-      })
+      try {
+        this.lastBlockChecked = i
+        const logs = await this.getPastLogs({
+          fromBlock: i,
+          toBlock: i + 500,
+          topics: Array.of(...this.observedTopics)
+        })
 
-      for (const log of logs) {
-        await this.addAddress(log)
+        for (const log of logs) {
+          await this.addAddress(log)
+        }
+      } catch (e) {
+        console.error(`Failed to fetch logs for block range ${i}-${i + 500}. Retrying`, e)
+        i -= 500
       }
     }
   }
