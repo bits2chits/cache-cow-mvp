@@ -3,7 +3,7 @@ import {RPCS} from "./enums/rpcs"
 import {UniswapFactoryObserver} from "./historical"
 import {KafkaAdminInstance} from "./kafka/admin"
 import * as uniswapState from "../uniswapFactoryObserver.state.json"
-import {ProducerFactory} from "./kafka/producer";
+import {ProducerFactory} from "./kafka/producer"
 
 async function processHistoricalEvents(): Promise<void> {
   const web3 = new Web3(RPCS.POLYGON)

@@ -4,7 +4,7 @@ import {Filter, Log, Web3} from "web3"
 import {sleep} from "../libs/sleep"
 import {KafkaAdmin} from "../kafka/admin"
 import {KafkaProducer} from "../kafka/producer"
-import {SYSTEM_EVENTS} from "../kafka";
+import {SYSTEM_EVENT_TOPICS} from "../kafka"
 
 
 // This won't exist in code for long, so no need to make any config files.
@@ -62,8 +62,8 @@ export class UniswapFactoryObserver {
     const topics = (await this.admin.listTopics())
     console.info(`Initialized observer with topics: ${topics}`)
     this.existingUniswapAddresses = new Set(topics.filter((topic) => !topic.startsWith("__") && !topic.includes(".")))
-    if (!topics.includes(SYSTEM_EVENTS.UNISWAP_LP_POOL_ADDED)) {
-      await this.admin.createTopic(SYSTEM_EVENTS.UNISWAP_LP_POOL_ADDED)
+    if (!topics.includes(SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED)) {
+      await this.admin.createTopic(SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED)
     }
     this.logInterval = setInterval(() => this.logState(), 1000)
     this.initialized = true
@@ -93,7 +93,7 @@ export class UniswapFactoryObserver {
       await this.admin.createTopic(log.address)
       this.existingUniswapAddresses.add(log.address)
       await this.producer.send({
-        topic: SYSTEM_EVENTS.UNISWAP_LP_POOL_ADDED,
+        topic: SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED,
         messages: [{
           key: log.address,
           value: JSON.stringify(log,  (_, value) =>

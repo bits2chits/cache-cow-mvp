@@ -10,8 +10,8 @@ import {
   ProducerConfig
 } from 'kafkajs'
 
-export enum SYSTEM_EVENTS {
-  UNISWAP_LP_POOL_ADDED = "uniswap-lp-pool-added"
+export enum SYSTEM_EVENT_TOPICS {
+  UNISWAP_LP_POOL_ADDED = "config.events.uniswap-lp-pool-added"
 }
 
 // https://github.com/tulios/kafkajs/tree/master#-usage
