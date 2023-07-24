@@ -5,6 +5,7 @@ import {Filter, Log, Web3} from "web3"
 import {KafkaAdminInstance} from "../src/kafka/admin"
 import {Admin} from "kafkajs"
 import {RPCS} from "../src/enums/rpcs"
+import {ProducerFactory} from "../src/kafka/producer"
 
 describe('Tests Historical Data Collection', () => {
   const contractAddress = '0x123'
@@ -22,7 +23,7 @@ describe('Tests Historical Data Collection', () => {
   })
 
   it('should create a topic for each new uniswap factory address', async () => {
-    const observer = new UniswapFactoryObserver(KafkaAdminInstance, web3, [eventSignature])
+    const observer = new UniswapFactoryObserver(await ProducerFactory.getProducer(), KafkaAdminInstance, web3, [eventSignature])
     const addAddressSpy = jest.spyOn(observer, 'addAddress')
     const getPastLogsSpy = jest.spyOn(observer, 'getPastLogs')
     getPastLogsSpy.mockImplementation((_: Filter) => {
@@ -36,9 +37,11 @@ describe('Tests Historical Data Collection', () => {
     expect(getPastLogsSpy).toHaveBeenCalledTimes(1)
     expect(topics).toContain(contractAddress)
     await admin.deleteTopics({topics: [contractAddress]})
+    observer.shutdown()
   })
   it('should add topics to observedTopics', async () => {
-    const observer = new UniswapFactoryObserver(KafkaAdminInstance, web3, [eventSignature])
+    const observer = new UniswapFactoryObserver(await ProducerFactory.getProducer(), KafkaAdminInstance, web3, [eventSignature])
     await expect(observer.logTopicIsObserved(eventSignatureHash)).resolves.toBeTruthy()
+    observer.shutdown()
   })
 })

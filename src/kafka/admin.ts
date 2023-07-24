@@ -1,6 +1,7 @@
 import {Web3} from "web3"
 import {Admin} from "kafkajs"
 import {KafkaService, KafkaServiceInstance} from "./index"
+import {RPCS} from "../enums/rpcs"
 
 export class KafkaAdmin {
   kafkaService: KafkaService
@@ -22,7 +23,7 @@ export class KafkaAdmin {
   }
 
   async createTopicFromEventSignature(eventSignature: string): Promise<void> {
-    const web3 = new Web3()
+    const web3 = new Web3(RPCS.POLYGON)
     const eventHash = web3.eth.abi.encodeEventSignature(eventSignature)
     await this.createTopic(eventHash)
   }

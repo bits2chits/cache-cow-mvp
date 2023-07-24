@@ -10,10 +10,14 @@ import {
   ProducerConfig
 } from 'kafkajs'
 
+export enum SYSTEM_EVENT_TOPICS {
+  UNISWAP_LP_POOL_ADDED = "config.events.uniswap-lp-pool-added"
+}
+
 // https://github.com/tulios/kafkajs/tree/master#-usage
 const defaultKafkaConfig = {
   clientId: 'my-app',
-  brokers: ['localhost:9092'] // from docker-compose
+  brokers: ['192.168.50.61:9092', 'localhost:9092'] // from docker-compose
 }
 
 const defaultProducerConfig: ProducerConfig = {
