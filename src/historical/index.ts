@@ -69,7 +69,7 @@ export class UniswapFactoryObserver {
     if (!this.existingUniswapAddresses.has(address)) {
       await this.admin.createTopic(address)
       this.existingUniswapAddresses.add(address)
-      console.info(`Added topic ${address} to kafka. Existing topics: ${Array.of(this.existingUniswapAddresses)}`)
+      console.info(`Added topic ${address} to kafka. Existing topics: ${Array.of(...this.existingUniswapAddresses)}`)
     }
   }
 
