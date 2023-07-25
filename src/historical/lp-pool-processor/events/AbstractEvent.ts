@@ -5,13 +5,18 @@ export abstract class AbstractEvent {
   abiElement: AbiElement
   log: LogDescription
 
-  constructor(abi: AbiElement[], log: LogDescription) {
-    this.abiElement = abi.find((fragment: AbiElement) =>
-      fragment.name === this.constructor.name
-      && fragment.type === "event"
-      && fragment.inputs.length === this.log.args.length
-    )
+  protected constructor(abi: AbiElement[], log: LogDescription) {
     this.log = log
+    for (const fragment of abi) {
+      if (fragment.name === this.constructor.name
+        && fragment.type === "event"
+        && fragment.inputs.length === this.log.args.length) {
+        this.abiElement = fragment
+      }
+    }
+    if (!this.abiElement) {
+      throw Error(`Invalid ABI passed to constructor. Ensure that the ABI has an event definition for event ${this.constructor.name} with ${this.log.args.length} arguments.`)
+    }
     this.setLogValues()
   }
 
@@ -21,5 +26,4 @@ export abstract class AbstractEvent {
         this[currentValue.name || currentIndex] = this.log.args[currentIndex]
       })
   }
-
 }

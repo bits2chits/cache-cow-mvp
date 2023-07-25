@@ -46,12 +46,12 @@ export class LpPoolProcessor {
 
   async fetchErc20Metadata(event: PairCreated): Promise<PairCreated> {
     const provider = new JsonRpcProvider(RPCS.POLYGON)
-    const token0Contract = new ethers.Contract(event.token0, this.erc20Interface, provider)
-    const token1Contract = new ethers.Contract(event.token1, this.erc20Interface, provider)
-    event.token0Symbol = await token0Contract.symbol()
-    event.token0Decimals = await token0Contract.decimals()
-    event.token1Symbol = await token1Contract.symbol()
-    event.token1Decimals = await token1Contract.decimals()
+    const token0Contract = new ethers.Contract(event.get("token0"), this.erc20Interface, provider)
+    const token1Contract = new ethers.Contract(event.get("token1"), this.erc20Interface, provider)
+    event.set("token0Symbol", await token0Contract.symbol())
+    event.set("token0Decimals", await token0Contract.decimals())
+    event.set("token1Symbol", await token1Contract.symbol())
+    event.set("token1Decimals", await token1Contract.decimals())
     return event
   }
 
@@ -62,7 +62,7 @@ export class LpPoolProcessor {
       await this.producer.send({
         topic: SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY,
         messages: [{
-          key: event.key,
+          key: event.get("key"),
           value: JSON.stringify(event)
         }]
       })

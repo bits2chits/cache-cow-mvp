@@ -5,7 +5,7 @@ import {KafkaAdminInstance} from "../src/kafka/admin"
 import {Admin} from "kafkajs"
 import {RPCS} from "../src/enums/rpcs"
 
-describe('Tests Historical Data Collection', () => {
+describe('Tests Uniswap Observer', () => {
   const contractAddress = '0x123'
   const eventSignature = "Event(uint256)"
   let admin: Admin
