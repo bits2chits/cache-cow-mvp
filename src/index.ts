@@ -1,6 +1,5 @@
-
 import {RPCS} from "./enums/rpcs"
-import {UniswapFactoryObserver} from "./historical"
+import {UniswapFactoryObserver} from "./historical/uniswap-observer"
 import * as uniswapState from "../uniswapFactoryObserver.state.json"
 
 async function processHistoricalEvents(): Promise<void> {

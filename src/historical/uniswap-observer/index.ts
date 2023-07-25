@@ -1,4 +1,3 @@
-import fs from "fs"
 import {clearInterval} from "timers"
 import {Filter, Log, Web3} from "web3"
 import {RPCS} from "../../enums/rpcs"
@@ -7,13 +6,12 @@ import {KafkaAdmin, KafkaAdminInstance} from "../../kafka/admin"
 import {KafkaProducer, ProducerFactory} from "../../kafka/producer"
 import {LogAndChain} from "./Types"
 import {sleep} from "../../libs/sleep"
-
+import fs from "fs"
 
 // This won't exist in code for long, so no need to make any config files.
 const eventSignaturesObserved = [
   'PairCreated(address,address,address,uint256)'
 ]
-
 
 export class UniswapFactoryObserver {
   producer: KafkaProducer
@@ -48,11 +46,13 @@ export class UniswapFactoryObserver {
   }
 
   logState(): void {
-    console.info({
-      existingUniswapAddresses: this.existingUniswapAddresses ? Array.of(...this.existingUniswapAddresses) : [],
-      observedTopics: this.observedTopics ? Array.of(...this.observedTopics) : [],
-      lastBlockChecked: this.lastBlockChecked || 0
-    })
+    if (process.env.NODE_ENV !== "test") {
+      console.info({
+        existingUniswapAddresses: this.existingUniswapAddresses ? Array.of(...this.existingUniswapAddresses) : [],
+        observedTopics: this.observedTopics ? Array.of(...this.observedTopics) : [],
+        lastBlockChecked: this.lastBlockChecked || 0
+      })
+    }
   }
 
   async initialize(config: string[]): Promise<void> {
