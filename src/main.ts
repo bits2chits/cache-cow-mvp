@@ -1,4 +1,4 @@
-import { Web3 } from 'web3'
+import { Web3, Block } from 'web3'
 import { MATIC_USDC } from './enums/pairs'
 
 // apprently this is necessary
@@ -9,6 +9,10 @@ const uniswapV2Abi = require('./abis/uniswap-v2.json')
 
 export async function fetchBlockNumber(web3: Web3): Promise<number> {
   return Number((await web3.eth.getBlockNumber()).toString())
+}
+
+export async function fetchBlock(web3: Web3, blockNumber: string|number, returnTransactionObjects: boolean): Promise<Block> {
+  return await web3.eth.getBlock(blockNumber, returnTransactionObjects)
 }
 
 interface Pair {
