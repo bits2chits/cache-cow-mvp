@@ -15,7 +15,7 @@ export async function fetchBlock(web3: Web3, blockNumber: string|number, returnT
   return await web3.eth.getBlock(blockNumber, returnTransactionObjects)
 }
 
-interface Pair {
+export interface Pair {
   token0: string
   token1: string
 }
@@ -26,7 +26,14 @@ export async function fetchPairAddress(web3: Web3, pair: Pair): Promise<string> 
   return pairAddress
 }
 
-interface Reserves {
+export async function fetchPairAddresses(web3: Web3, address: string): Promise<Pair> {
+  const uniswapPairContract = new web3.eth.Contract(uniswapV2Abi, address)
+  const token0 = await (uniswapPairContract.methods as any).token0().call()
+  const token1 = await (uniswapPairContract.methods as any).token1().call()
+  return { token0, token1 }
+}
+
+export interface Reserves {
   _reserve0: bigint
   _reserve1: bigint
   _blockTimestampLast: bigint
