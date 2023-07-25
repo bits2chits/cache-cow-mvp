@@ -12,6 +12,9 @@ export class KafkaConsumer {
     process.on('exit', async () => {
       await this.consumer?.disconnect()
     })
+    process.on('SIGINT', async () => {
+      await this.consumer?.disconnect()
+    })
   }
 
   async getInstance(): Promise<Consumer> {

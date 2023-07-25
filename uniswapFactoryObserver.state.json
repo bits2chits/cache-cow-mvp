@@ -1,7 +1,15 @@
 {
-  "existingUniswapAddresses": [],
-  "observedTopics": [
-    "0x9c268a61382a94b7c8331302cbdbb69797c4db49a07ff635b81c7307b3f351c9"
+  "existingUniswapAddresses": [
+    "0x7319fc3849bc87f22494f019ba921692f7cd0b9b",
+    "0xf9773e320f09f1cf33aa808aaf744a330ff0e279",
+    "0x5757371414417b8c6caad45baef941abc7d3ab32",
+    "0x2724b9497b2cf3325c6be3ea430b3cec34b5ef2d",
+    "0xe7fb3e833efe5f9c441105eb65ef8b261266423b",
+    "0x08cbfd8897aa7f96cfeaecfaf57f43b8671c75c2",
+    "0x2a0c8fa33b3e6343699d372445ae68216fa3119d"
   ],
-  "lastBlockChecked": 2704001
+  "observedTopics": [
+    "0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9"
+  ],
+  "lastBlockChecked": 7568001
 }
