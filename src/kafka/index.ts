@@ -11,7 +11,8 @@ import {
 } from 'kafkajs'
 
 export enum SYSTEM_EVENT_TOPICS {
-  UNISWAP_LP_POOL_ADDED = "config.events.uniswap-lp-pool-added"
+  UNISWAP_LP_POOL_ADDED = "config.events.uniswap-lp-pool-added",
+  LP_POOL_REGISTRY = "config.events.lp-pool-registry"
 }
 
 // https://github.com/tulios/kafkajs/tree/master#-usage
