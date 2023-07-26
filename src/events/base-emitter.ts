@@ -1,15 +1,7 @@
 import { EventEmitter } from "node:events"
-
-export enum BaseEventsEnum {}
-
-export interface BaseEventListener<EventsEnum, Listener extends (...args: any[]) => void> {
-  event: EventsEnum | (string | symbol)
-  listener: Listener
-}
+import { BaseEventListener } from "./types"
 
 export class BaseEventEmitter extends EventEmitter {}
-
-export class BaseError extends Error {}
 
 export default class BaseEvents<EventsEnum, Listener extends (...args: any[]) => void> {
   protected emitter: EventEmitter

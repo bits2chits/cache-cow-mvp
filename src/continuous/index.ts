@@ -8,7 +8,7 @@ async function main(): Promise<void> {
   const web3 = new Web3(MATIC_USDC.RPC)
   const blockEvents = new BlockEvents()
   let blockNumber = await fetchBlockNumber(web3)
-
+  // @TODO register pair event listeners
   await poll(web3, {
     interval: 500,
     startAtBlock: blockNumber,
