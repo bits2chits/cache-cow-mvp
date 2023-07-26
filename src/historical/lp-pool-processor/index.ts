@@ -1,15 +1,17 @@
 import {ethers, Interface, JsonRpcProvider} from "ethers"
 import {RPCS} from "../../enums/rpcs"
 import {SYSTEM_EVENT_TOPICS} from "../../kafka"
-import {KafkaAdmin, KafkaAdminInstance} from "../../kafka/admin"
+import {AdminFactory, KafkaAdmin} from "../../kafka/admin"
 import {ConsumerFactory, KafkaConsumer} from "../../kafka/consumer"
 import {KafkaProducer, ProducerFactory} from "../../kafka/producer"
 import {PairCreated} from "./events/PairCreated"
 import {LpPoolAddedMessage} from "./Types"
-import * as Erc20Abi from "../../abis/erc20.json"
-import * as UniswapFactoryAbi from "../../abis/uniswap-factory.json"
+import Erc20Abi from "../../abis/erc20.json"
+import UniswapFactoryAbi from "../../abis/uniswap-factory.json"
+import {sleep} from "../../libs/sleep"
 
 export class LpPoolProcessor {
+  running: boolean
   uniswapInterface: Interface
   erc20Interface: Interface
   admin: KafkaAdmin
@@ -24,7 +26,7 @@ export class LpPoolProcessor {
   }
 
   async initialize(): Promise<void> {
-    this.admin = KafkaAdminInstance
+    this.admin = await AdminFactory.getAdmin()
     this.producer = await ProducerFactory.getProducer()
     this.consumer = await ConsumerFactory.getConsumer({
         topics: [SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED]
@@ -42,6 +44,10 @@ export class LpPoolProcessor {
         await this.processLpPoolAddedMessage(JSON.parse(message.value.toString()))
       }
     })
+    this.running = true
+    while (this.running) {
+      await sleep(1000)
+    }
   }
 
   async fetchErc20Metadata(event: PairCreated): Promise<PairCreated> {
@@ -63,11 +69,23 @@ export class LpPoolProcessor {
         topic: SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY,
         messages: [{
           key: event.get("key"),
-          value: JSON.stringify(event)
+          value: JSON.stringify(event, (_, value) => {
+            typeof value === 'bigint'
+              ? value.toString()
+              : value
+          })
         }]
       })
     } catch (e) {
       console.error(`Unable to process logs for message. Deleting pool`, e)
     }
+  }
+
+  async shutdown(): Promise<void> {
+    await this.consumer.disconnect()
+    await this.producer.disconnect()
+    await this.admin.disconnect()
+    this.running = false
+    console.log("LP Pool Processor shutdown completed")
   }
 }

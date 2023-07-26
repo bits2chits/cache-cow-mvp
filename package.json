@@ -22,7 +22,7 @@
     "typescript": "^5.1.6"
   },
   "scripts": {
-    "historicalEvents": "npx nodemon",
+    "historicalEvents": "npx nodemon --config ./src/historical/nodemon.json ./src/historical/index.ts",
     "start": "node build/src/main.js",
     "clean": "rimraf coverage build tmp",
     "prebuild": "npm run lint",

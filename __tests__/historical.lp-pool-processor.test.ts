@@ -44,7 +44,4 @@ describe('Tests LP Pool Processor', () => {
     expect(() => new TestEvent(log))
       .toThrow("Invalid ABI passed to constructor. Ensure that the ABI has an event definition for event TestEvent with 4 arguments.")
   })
-  it("should fail", () => {
-    expect(true).toBeFalsy()
-  })
 })

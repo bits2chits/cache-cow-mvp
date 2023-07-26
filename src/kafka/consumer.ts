@@ -38,6 +38,7 @@ export class KafkaConsumer {
   }
 
   async disconnect(): Promise<void> {
+    await this.consumer?.stop()
     await this.consumer?.disconnect()
   }
 }
