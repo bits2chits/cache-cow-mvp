@@ -1,20 +1,17 @@
-
 import {jest} from '@jest/globals'
-import {UniswapFactoryObserver} from "../src/historical"
+import {UniswapFactoryObserver} from "../src/historical/uniswap-observer"
 import {Filter, Log, Web3} from "web3"
-import {KafkaAdminInstance} from "../src/kafka/admin"
-import {Admin} from "kafkajs"
+import {AdminFactory, KafkaAdmin} from "../src/kafka/admin"
 import {RPCS} from "../src/enums/rpcs"
-import {ProducerFactory} from "../src/kafka/producer"
 
-describe('Tests Historical Data Collection', () => {
+describe('Tests Uniswap Observer', () => {
   const contractAddress = '0x123'
   const eventSignature = "Event(uint256)"
-  let admin: Admin
+  let admin: KafkaAdmin
   let web3: Web3
   let eventSignatureHash: string
   beforeAll(async () => {
-    admin = await KafkaAdminInstance.getInstance()
+    admin = await AdminFactory.getAdmin()
     web3 = new Web3(RPCS.POLYGON)
     eventSignatureHash = web3.eth.abi.encodeEventSignature(eventSignature)
   })
@@ -23,7 +20,7 @@ describe('Tests Historical Data Collection', () => {
   })
 
   it('should create a topic for each new uniswap factory address', async () => {
-    const observer = new UniswapFactoryObserver(await ProducerFactory.getProducer(), KafkaAdminInstance, web3, [eventSignature])
+    const observer = new UniswapFactoryObserver(RPCS.POLYGON, [eventSignature])
     const addAddressSpy = jest.spyOn(observer, 'addAddress')
     const getPastLogsSpy = jest.spyOn(observer, 'getPastLogs')
     getPastLogsSpy.mockImplementation((_: Filter) => {
@@ -36,12 +33,12 @@ describe('Tests Historical Data Collection', () => {
     expect(addAddressSpy).toHaveBeenCalledTimes(1)
     expect(getPastLogsSpy).toHaveBeenCalledTimes(1)
     expect(topics).toContain(contractAddress)
-    await admin.deleteTopics({topics: [contractAddress]})
-    observer.shutdown()
+    await admin.deleteTopic(contractAddress)
+    await observer.shutdown()
   })
   it('should add topics to observedTopics', async () => {
-    const observer = new UniswapFactoryObserver(await ProducerFactory.getProducer(), KafkaAdminInstance, web3, [eventSignature])
+    const observer = new UniswapFactoryObserver(RPCS.POLYGON, [eventSignature])
     await expect(observer.logTopicIsObserved(eventSignatureHash)).resolves.toBeTruthy()
-    observer.shutdown()
+    await observer.shutdown()
   })
 })

@@ -3,7 +3,7 @@ import { MATIC_USDC } from "../../../src/enums/pairs"
 import PriceProcessor from '../../../src/continuous/price-processor/index';
 import BlockEvents from "../../../src/events/block-events";
 import { fetchBlockNumber, fetchPairAddress } from "../../../src/main";
-import { UniswapFactoryObserver } from "../../../src/historical";
+import { UniswapFactoryObserver } from "../../../src/historical/uniswap-observer";
 import { ProducerRecord } from "kafkajs";
 import { KafkaProducer } from "../../../src/kafka/producer";
 import { sleep } from "../../../src/libs/sleep";

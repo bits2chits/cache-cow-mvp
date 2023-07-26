@@ -22,7 +22,7 @@
     "typescript": "^5.1.6"
   },
   "scripts": {
-    "historicalEvents": "npx nodemon",
+    "historicalEvents": "npx nodemon --config ./src/historical/nodemon.json ./src/historical/index.ts",
     "start": "node build/src/main.js",
     "clean": "rimraf coverage build tmp",
     "prebuild": "npm run lint",
@@ -40,6 +40,7 @@
     "@types/jest": "^29.5.2",
     "@types/kafkajs": "^1.9.0",
     "@types/web3": "^1.2.2",
+    "ethers": "^6.6.5",
     "kafkajs": "^2.2.4",
     "tslib": "~2.5",
     "web3": "^4.0.3",

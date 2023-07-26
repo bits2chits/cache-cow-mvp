@@ -1,11 +1,7 @@
-import { Web3, Block } from 'web3'
-import { MATIC_USDC } from './enums/pairs'
-
-// apprently this is necessary
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const uniswapFactoryAbi = require('./abis/uniswap-factory.json')
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const uniswapV2Abi = require('./abis/uniswap-v2.json')
+import {Block, Web3} from 'web3'
+import {MATIC_USDC} from './enums/pairs'
+import uniswapFactoryAbi from './abis/uniswap-factory.json'
+import uniswapV2Abi from './abis/uniswap-v2.json'
 
 export async function fetchBlockNumber(web3: Web3): Promise<number> {
   return Number((await web3.eth.getBlockNumber()).toString())
@@ -54,7 +50,7 @@ interface PairPrice {
 export function calcPrice(reserves: Reserves): PairPrice { // eslint-disable-line @typescript-eslint/no-explicit-any
   // The name parameter should be of type string. Any is used only to trigger the rule.
   return {
-    token0Price: Number(parseInt(reserves._reserve0.toString().substring(0, 6)) / parseInt(reserves._reserve1.toString().substring(0, 6))) ,
-    token1Price: Number(parseInt(reserves._reserve1.toString().substring(0, 6)) / parseInt(reserves._reserve0.toString().substring(0, 6))) 
+    token0Price: Number(parseInt(reserves._reserve0.toString().substring(0, 6)) / parseInt(reserves._reserve1.toString().substring(0, 6))),
+    token1Price: Number(parseInt(reserves._reserve1.toString().substring(0, 6)) / parseInt(reserves._reserve0.toString().substring(0, 6)))
   }
 }

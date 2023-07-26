@@ -1,75 +1,77 @@
+import {Filter, Log, Web3} from "web3"
+import {RPCS} from "../../enums/rpcs"
+import {SYSTEM_EVENT_TOPICS} from "../../kafka"
+import {AdminFactory, KafkaAdmin} from "../../kafka/admin"
+import {KafkaProducer, ProducerFactory} from "../../kafka/producer"
+import {LogAndChain} from "./Types"
+import {sleep} from "../../libs/sleep"
 import fs from "fs"
 import {clearInterval} from "timers"
-import {Filter, Log, Web3} from "web3"
-import {sleep} from "../../libs/sleep"
-import {KafkaAdmin} from "../../kafka/admin"
-import {KafkaProducer} from "../../kafka/producer"
-import {SYSTEM_EVENT_TOPICS} from "../../kafka"
-
 
 // This won't exist in code for long, so no need to make any config files.
 const eventSignaturesObserved = [
   'PairCreated(address,address,address,uint256)'
 ]
 
-/* We'll want this data stored eventually
-interface UniswapFactoryMetadata {
-  address: string
-  createdBlock: number
-  createdTimestamp: number
-  chain: string
-}*/
-
 export class UniswapFactoryObserver {
   producer: KafkaProducer
   admin: KafkaAdmin
+  rpc: RPCS
   web3: Web3
   initialized: boolean
-  logInterval: NodeJS.Timer
+  logInterval = 1000
+  logTimer: NodeJS.Timer
   lastBlockChecked: number
   existingUniswapAddresses: Set<string>
   observedTopics: Set<string>
+  observedEventSignatures: string[]
 
   constructor(
-    producer: KafkaProducer,
-    admin: KafkaAdmin,
-    web3: Web3,
+    rpc: RPCS,
     config: string[] = eventSignaturesObserved,
   ) {
-    this.producer = producer
-    this.admin = admin
-    this.web3 = web3
-    const eventSignature = config.length > 0 ? config : eventSignaturesObserved
-    this.initialize(eventSignature)
+    this.rpc = rpc
+    this.web3 = new Web3(rpc)
+    this.observedEventSignatures = config.length > 0 ? config : eventSignaturesObserved
+    this.initialize()
       .then(() => {
         this.initialized = true
       })
       .catch(console.error)
-    process.on('SIGINT', () => {
-      this.shutdown()
+    process.on('SIGINT', async () => {
+      await this.shutdown()
     })
-    process.on('exit', () => {
-      this.shutdown()
+    process.on('exit', async () => {
+      await this.shutdown()
     })
   }
 
   logState(): void {
-    console.info({
-      existingUniswapAddresses: this.existingUniswapAddresses ? Array.of(...this.existingUniswapAddresses) : [],
-      observedTopics: this.observedTopics ? Array.of(...this.observedTopics) : [],
-      lastBlockChecked: this.lastBlockChecked || 0
-    })
+    if (process.env.NODE_ENV !== "test") {
+      console.info({
+        existingUniswapAddresses: this.existingUniswapAddresses ? Array.of(...this.existingUniswapAddresses) : [],
+        observedTopics: this.observedTopics ? Array.of(...this.observedTopics) : [],
+        lastBlockChecked: this.lastBlockChecked || 0
+      })
+    }
   }
 
-  async initialize(config: string[]): Promise<void> {
-    this.observedTopics = new Set(config.map(this.web3.eth.abi.encodeEventSignature))
+  async initialize(): Promise<void> {
+    this.admin = await AdminFactory.getAdmin()
+    this.producer = await ProducerFactory.getProducer()
+    this.observedTopics = new Set(this.observedEventSignatures.map(this.web3.eth.abi.encodeEventSignature))
     const topics = (await this.admin.listTopics())
-    console.info(`Initialized observer with topics: ${topics}`)
     this.existingUniswapAddresses = new Set(topics.filter((topic) => !topic.startsWith("__") && !topic.includes(".")))
+
     if (!topics.includes(SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED)) {
+      console.info(`Creating system event topic: ${SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED}`)
       await this.admin.createTopic(SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED)
     }
-    this.logInterval = setInterval(() => this.logState(), 1000)
+
+    console.info(`Setting log interval to ${this.logInterval}`)
+    this.logTimer = setInterval(() => this.logState(), this.logInterval)
+
+    console.info(`Initialized observer with topics: ${JSON.stringify(Array.of(...this.existingUniswapAddresses))}`)
     this.initialized = true
   }
 
@@ -79,13 +81,16 @@ export class UniswapFactoryObserver {
     }
   }
 
-  shutdown(): void {
+  async shutdown(): Promise<void> {
     if (this.initialized) {
+      await this.producer.disconnect()
+      await this.admin.disconnect()
+
       if (process.env.NODE_ENV !== "test") {
         fs.writeFileSync("uniswapFactoryObserver.state.json",
           JSON.stringify({
             existingUniswapAddresses: this.existingUniswapAddresses ? Array.of(...this.existingUniswapAddresses) : [],
-            observedTopics: this.observedTopics ? Array.of(...this.observedTopics) : [],
+            observedEventSignatures: this.observedEventSignatures ? Array.of(...this.observedEventSignatures) : [],
             lastBlockChecked: this.lastBlockChecked || 0
           }, null, 2)
         )
@@ -94,7 +99,7 @@ export class UniswapFactoryObserver {
     }
   }
 
-  async addAddress(log: Log): Promise<void> {
+  async addAddress(log: LogAndChain): Promise<void> {
     if (!this.existingUniswapAddresses.has(log.address)) {
       await this.admin.createTopic(log.address)
       this.existingUniswapAddresses.add(log.address)
@@ -126,15 +131,20 @@ export class UniswapFactoryObserver {
     await this.initialization()
 
     for (let i = startBlock; i < endBlock; i += 500) {
-      this.lastBlockChecked = i
-      const logs = await this.getPastLogs({
-        fromBlock: i,
-        toBlock: i + 500,
-        topics: Array.of(...this.observedTopics)
-      })
+      try {
+        this.lastBlockChecked = i
+        const logs = await this.getPastLogs({
+          fromBlock: i,
+          toBlock: i + 500,
+          topics: Array.of(...this.observedTopics)
+        })
 
-      for (const log of logs) {
-        await this.addAddress(log)
+        for (const log of logs) {
+          await this.addAddress({...log, chainId: this.rpc}) // TODO: Make RPC structure better
+        }
+      } catch (e) {
+        console.error(`Failed to fetch logs for block range ${i}-${i + 500}. Retrying`, e)
+        i -= 500
       }
     }
   }

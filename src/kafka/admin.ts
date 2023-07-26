@@ -68,10 +68,12 @@ export class KafkaAdmin {
   }
 }
 
-export const KafkaAdminInstance: KafkaAdmin = new KafkaAdmin(KafkaServiceInstance)
+class KafkaAdminFactory {
+  async getAdmin(): Promise<KafkaAdmin> {
+    const admin = new KafkaAdmin(KafkaServiceInstance)
+    await admin.getInstance()
+    return admin
+  }
+}
 
-
-
-
-
-
+export const AdminFactory = new KafkaAdminFactory()

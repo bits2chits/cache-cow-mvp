@@ -1,6 +1,6 @@
 
-import { ETH_AAVE, MATIC_USDC } from '../src/enums/pairs';
-import { calcPrice , fetchBlockNumber, fetchPairAddress, getReserves } from '../src/main';
+import { ETH_AAVE, MATIC_USDC } from '../src/enums/pairs'
+import { calcPrice , fetchBlockNumber, fetchPairAddress, getReserves } from '../src/main'
 import { Web3 } from 'web3'
 
 describe('calculates price data for pair', () => {
