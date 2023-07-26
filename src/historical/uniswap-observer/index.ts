@@ -1,12 +1,12 @@
-import {clearInterval} from "timers"
 import {Filter, Log, Web3} from "web3"
 import {RPCS} from "../../enums/rpcs"
 import {SYSTEM_EVENT_TOPICS} from "../../kafka"
-import {KafkaAdmin, KafkaAdminInstance} from "../../kafka/admin"
+import {AdminFactory, KafkaAdmin} from "../../kafka/admin"
 import {KafkaProducer, ProducerFactory} from "../../kafka/producer"
 import {LogAndChain} from "./Types"
 import {sleep} from "../../libs/sleep"
 import fs from "fs"
+import {clearInterval} from "timers"
 
 // This won't exist in code for long, so no need to make any config files.
 const eventSignaturesObserved = [
@@ -24,6 +24,7 @@ export class UniswapFactoryObserver {
   lastBlockChecked: number
   existingUniswapAddresses: Set<string>
   observedTopics: Set<string>
+  observedEventSignatures: string[]
 
   constructor(
     rpc: RPCS,
@@ -31,17 +32,17 @@ export class UniswapFactoryObserver {
   ) {
     this.rpc = rpc
     this.web3 = new Web3(rpc)
-    const eventSignature = config.length > 0 ? config : eventSignaturesObserved
-    this.initialize(eventSignature)
+    this.observedEventSignatures = config.length > 0 ? config : eventSignaturesObserved
+    this.initialize()
       .then(() => {
         this.initialized = true
       })
       .catch(console.error)
-    process.on('SIGINT', () => {
-      this.shutdown()
+    process.on('SIGINT', async () => {
+      await this.shutdown()
     })
-    process.on('exit', () => {
-      this.shutdown()
+    process.on('exit', async () => {
+      await this.shutdown()
     })
   }
 
@@ -55,10 +56,10 @@ export class UniswapFactoryObserver {
     }
   }
 
-  async initialize(config: string[]): Promise<void> {
-    this.admin = KafkaAdminInstance
+  async initialize(): Promise<void> {
+    this.admin = await AdminFactory.getAdmin()
     this.producer = await ProducerFactory.getProducer()
-    this.observedTopics = new Set(config.map(this.web3.eth.abi.encodeEventSignature))
+    this.observedTopics = new Set(this.observedEventSignatures.map(this.web3.eth.abi.encodeEventSignature))
     const topics = (await this.admin.listTopics())
     this.existingUniswapAddresses = new Set(topics.filter((topic) => !topic.startsWith("__") && !topic.includes(".")))
 
@@ -70,7 +71,7 @@ export class UniswapFactoryObserver {
     console.info(`Setting log interval to ${this.logInterval}`)
     this.logTimer = setInterval(() => this.logState(), this.logInterval)
 
-    console.info(`Initialized observer with topics: ${this.existingUniswapAddresses}`)
+    console.info(`Initialized observer with topics: ${JSON.stringify(Array.of(...this.existingUniswapAddresses))}`)
     this.initialized = true
   }
 
@@ -80,13 +81,16 @@ export class UniswapFactoryObserver {
     }
   }
 
-  shutdown(): void {
+  async shutdown(): Promise<void> {
     if (this.initialized) {
+      await this.producer.disconnect()
+      await this.admin.disconnect()
+
       if (process.env.NODE_ENV !== "test") {
         fs.writeFileSync("uniswapFactoryObserver.state.json",
           JSON.stringify({
             existingUniswapAddresses: this.existingUniswapAddresses ? Array.of(...this.existingUniswapAddresses) : [],
-            observedTopics: this.observedTopics ? Array.of(...this.observedTopics) : [],
+            observedEventSignatures: this.observedEventSignatures ? Array.of(...this.observedEventSignatures) : [],
             lastBlockChecked: this.lastBlockChecked || 0
           }, null, 2)
         )
