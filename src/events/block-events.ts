@@ -26,7 +26,6 @@ export default class BlockEvents extends BaseEvents<BlockEventsEnum, NewBlockLis
   }
 
   newBlock(chain: string, blockNumber: number): void {
-    console.log(BlockEventsEnum['new-block'], chain, blockNumber)
     this.emitter.emit(BlockEventsEnum['new-block'], chain, blockNumber)
   }
 
@@ -35,12 +34,10 @@ export default class BlockEvents extends BaseEvents<BlockEventsEnum, NewBlockLis
   }
 
   onNewBlock(cb: NewBlockListener): void {
-    this.emitter.on(BlockEventsEnum['new-block'], cb)
-    this.listeners.push({ event: BlockEventsEnum['new-block'], listener: cb })
+    this.on(BlockEventsEnum['new-block'], cb)
   }
 
   onBlockError(cb: BlockErrorListener): void {
-    this.emitter.on(BlockEventsEnum['block-error'], cb)
-    this.listeners.push({ event: BlockEventsEnum['block-error'], listener: cb })
+    this.on(BlockEventsEnum['block-error'], cb)
   }
 }

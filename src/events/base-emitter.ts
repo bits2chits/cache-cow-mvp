@@ -34,4 +34,9 @@ export default class BaseEvents<EventsEnum, Listener extends (...args: any[]) =>
   setEmitter(emitter: BaseEventEmitter): void {
     this.emitter = emitter
   }
+
+  on(event: string | symbol, listener: Listener): void { // @TODO get rid of unused variables console.error
+    this.emitter.on(event, listener)
+    this.listeners.push({ event, listener })
+  }
 }
