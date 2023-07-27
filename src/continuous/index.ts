@@ -3,12 +3,17 @@ import { poll } from "../poller"
 import { fetchBlockNumber } from "../main"
 import BlockEvents from "../events/block-events"
 import {Chain, RpcCollection} from "../enums/rpcs";
+import {BlockProcessor} from "../poller/block-processor/block-processor"
+import UniswapObserverState from "../../uniswapFactoryObserver.state.json"
 
-async function main(): Promise<void> {
-  const chain = Chain.Polygon
-  const rpcCollection = new RpcCollection()
-  const web3 = new Web3(rpcCollection.getWeb3Provider(chain))
-  const blockEvents = new BlockEvents()
+async function main(
+  chain = Chain.Polygon,
+  rpcCollection = new RpcCollection(),
+  blockEvents = new BlockEvents(),
+  web3 = new Web3(rpcCollection.getWeb3Provider(chain)),
+  blockProcessor = new BlockProcessor(web3, UniswapObserverState.observedEventSignatures)
+): Promise<void> {
+  blockProcessor.initialize()
   let blockNumber = await fetchBlockNumber(web3)
   // @TODO register pair event listeners
   await poll(web3, {

@@ -2,6 +2,7 @@ import {Block, Log, TransactionReceipt, Web3} from "web3"
 import BlockEvents from "../../events/block-events"
 import {BlockEventListener, BlockEventsEnum, NewBlockListener} from "../../events/types"
 import {RpcCollection} from "../../enums/rpcs"
+import {BlockData} from "./types";
 
 export class BlockProcessor implements BlockEventListener {
   web3: Web3
@@ -20,19 +21,25 @@ export class BlockProcessor implements BlockEventListener {
   }
 
   initialize(): void {
-    this.blockEvents.onNewBlock(this.onBlock.bind(this))
+    this.blockEvents.onNewBlock(this.onNewBlock.bind(this))
+    this.blockEvents.onBlockData(this.onBlockData.bind(this))
   }
 
   async processLogs(chain: string, logs: Log[]): Promise<void> {
     for (const log of logs) {
       const topic = log.topics[0].toString()
       if (this.observedTopics.has(topic)) {
-        this.blockEvents.logData(chain, topic, log)
+        this.blockEvents.logData(chain, log)
       }
     }
   }
 
-  async onBlock(chain: string, blockNumber: number): Promise<void> {
+  async onBlockData(chain: string, blockData: BlockData): Promise<void> {
+    // TODO - We can eventually move this to our archival block storage processor. Let's see how that goes.
+    console.info(`Received block data from ${chain} - ${blockData.block.number}`)
+  }
+
+  async onNewBlock(chain: string, blockNumber: number): Promise<void> {
     const web3 = new Web3(this.rpcCollection.getWeb3Provider(chain))
     const block: Block = await web3.eth.getBlock(blockNumber)
     const transactionReceipts: TransactionReceipt[] = []
@@ -41,6 +48,6 @@ export class BlockProcessor implements BlockEventListener {
       transactionReceipts.push(receipt)
       await this.processLogs(chain, receipt.logs)
     }
-    this.blockEvents.blockData('block-data', {block, transactionReceipts})
+    this.blockEvents.blockData(chain, {block, transactionReceipts})
   }
 }
