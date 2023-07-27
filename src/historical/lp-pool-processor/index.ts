@@ -3,15 +3,15 @@ import {SYSTEM_EVENT_TOPICS} from "../../kafka"
 import {AdminFactory, KafkaAdmin} from "../../kafka/admin"
 import {ConsumerFactory, KafkaConsumer} from "../../kafka/consumer"
 import {KafkaProducer, ProducerFactory} from "../../kafka/producer"
-import {PairCreated} from "./events/PairCreated"
+import {PairCreated} from "./events/pair-created"
 import {LpPoolAddedMessage} from "./types"
 import Erc20Abi from "../../abis/erc20.json"
 import UniswapFactoryAbi from "../../abis/uniswap-factory.json"
-import {sleep} from "../../libs/sleep"
 import {RpcCollection} from "../../enums/rpcs"
+import BaseProcessor from "../../processor"
+import { ProcessorInterface } from "../../processor/types"
 
-export class LpPoolProcessor {
-  running: boolean
+export class LpPoolProcessor extends BaseProcessor implements ProcessorInterface {
   uniswapInterface: Interface
   erc20Interface: Interface
   rpcCollection: RpcCollection
@@ -20,11 +20,10 @@ export class LpPoolProcessor {
   consumer: KafkaConsumer
 
   constructor() {
+    super()
     this.uniswapInterface = new ethers.Interface(UniswapFactoryAbi)
     this.erc20Interface = new ethers.Interface(Erc20Abi)
     this.rpcCollection = new RpcCollection()
-    this.initialize()
-      .catch(console.error)
   }
 
   async initialize(): Promise<void> {
@@ -46,10 +45,7 @@ export class LpPoolProcessor {
         await this.processLpPoolAddedMessage(JSON.parse(message.value.toString()))
       }
     })
-    this.running = true
-    while (this.running) {
-      await sleep(1000)
-    }
+    await super.initialize()
   }
 
   async fetchErc20Metadata(chain: string, event: PairCreated): Promise<PairCreated> {
@@ -88,7 +84,7 @@ export class LpPoolProcessor {
     await this.consumer.disconnect()
     await this.producer.disconnect()
     await this.admin.disconnect()
-    this.running = false
+    await super.shutdown()
     console.log("LP Pool Processor shutdown completed")
   }
 }
