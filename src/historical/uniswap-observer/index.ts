@@ -1,4 +1,3 @@
-import {Filter, Log, Web3} from "web3"
 import {SYSTEM_EVENT_TOPICS} from "../../kafka"
 import {AdminFactory, KafkaAdmin} from "../../kafka/admin"
 import {KafkaProducer, ProducerFactory} from "../../kafka/producer"
@@ -6,7 +5,8 @@ import {LogAndChain} from "./types"
 import {sleep} from "../../libs/sleep"
 import fs from "fs"
 import {clearInterval} from "timers"
-import {Chain, RpcCollection} from "../../enums/rpcs";
+import {Filter, Log, Web3} from "web3"
+import {Chain, RpcCollection} from "../../enums/rpcs"
 
 // This won't exist in code for long, so no need to make any config files.
 const eventSignaturesObserved = [

@@ -1,8 +1,9 @@
 import {jest} from '@jest/globals'
-import {UniswapFactoryObserver} from "../src/historical/uniswap-observer"
+
+import {UniswapFactoryObserver} from "../../src/historical/uniswap-observer"
 import {Filter, Log, Web3} from "web3"
-import {AdminFactory, KafkaAdmin} from "../src/kafka/admin"
-import {Chain, RpcCollection} from "../src/enums/rpcs"
+import {AdminFactory, KafkaAdmin} from "../../src/kafka/admin"
+import {Chain, RpcCollection} from "../../src/enums/rpcs"
 
 describe('Tests Uniswap Observer', () => {
   const rpcCollection = new RpcCollection()
