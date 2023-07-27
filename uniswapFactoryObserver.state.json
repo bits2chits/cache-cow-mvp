@@ -1,7 +1,8 @@
 {
   "existingUniswapAddresses": [],
   "observedEventSignatures": [
-    "PairCreated(address,address,address,uint256)"
+    "PairCreated(address,address,address,uint256)",
+    "Sync(uint112,uint112)"
   ],
   "lastBlockChecked": 1
 }
