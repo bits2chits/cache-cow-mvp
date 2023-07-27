@@ -7,7 +7,7 @@ import {AdminFactory, KafkaAdmin} from "../src/kafka/admin"
 import {sleep} from "../src/libs/sleep"
 import {ConsumerFactory} from "../src/kafka/consumer"
 import {ProducerFactory} from "../src/kafka/producer"
-import {RPCS} from "../src/enums/rpcs"
+import {Chain, RpcCollection} from "../src/enums/rpcs";
 
 jest.setTimeout(30000)
 
@@ -79,8 +79,9 @@ describe('Tests Kafka', () => {
     await producer.disconnect()
   })
   it('should crate a topic from event signature', async () => {
+    const rpcCollection = new RpcCollection()
     const eventSignature = 'Event(uint256)'
-    const eventHash = (new Web3(RPCS.POLYGON)).eth.abi.encodeEventSignature(eventSignature)
+    const eventHash = (new Web3(rpcCollection.getWeb3Provider(Chain.Polygon))).eth.abi.encodeEventSignature(eventSignature)
     await admin.createTopicFromEventSignature(eventSignature)
     const topics = await admin.listTopics()
     expect(topics).toContain(eventHash)

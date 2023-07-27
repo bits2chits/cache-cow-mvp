@@ -1,3 +1,4 @@
+
 import {LogDescription} from "ethers"
 import {AbstractEvent} from "./AbstractEvent"
 import UniswapFactoryAbi from "../../../abis/uniswap-factory.json"
@@ -11,15 +12,7 @@ export class PairCreated extends AbstractEvent {
     this["key"] = `${this?.["token0"]}:${this?.["token1"]}:${this?.["pair"]}:${this?.["3"]}`
   }
 
-  get<T>(key: string): T {
-    return this?.[key]
-  }
-
-  set<T>(key: string, value: T): void {
-    this[key] = value
-  }
-
-  toJSON() {
+  override toJSON(): object {
     return {
       token0: this?.["token0"],
       token0Symbol: this?.["token0Symbol"],

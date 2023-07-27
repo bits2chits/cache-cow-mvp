@@ -1,12 +1,13 @@
 import Web3 from "web3"
 import { MATIC_USDC } from "../../../src/enums/pairs"
-import PriceProcessor from '../../../src/continuous/price-processor/index';
-import BlockEvents from "../../../src/events/block-events";
-import { fetchBlockNumber, fetchPairAddress } from "../../../src/main";
-import { UniswapFactoryObserver } from "../../../src/historical/uniswap-observer";
-import { ProducerRecord } from "kafkajs";
-import { KafkaProducer } from "../../../src/kafka/producer";
-import { sleep } from "../../../src/libs/sleep";
+import PriceProcessor from '../../../src/continuous/price-processor/index'
+import BlockEvents from "../../../src/events/block-events"
+import { fetchBlockNumber, fetchPairAddress } from "../../../src/main"
+import { UniswapFactoryObserver } from "../../../src/historical/uniswap-observer"
+import { ProducerRecord } from "kafkajs"
+import { KafkaProducer } from "../../../src/kafka/producer"
+import { sleep } from "../../../src/libs/sleep"
+import {Chain, RpcCollection} from "../../../src/enums/rpcs"
 
 class MockUniswapObserver {
   existingUniswapAddresses: Set<string>
@@ -23,7 +24,8 @@ class MockProducer {
 }
 
 describe('Tests Price Processor', () => {
-  const web3 = new Web3(MATIC_USDC.RPC)
+  const rpcCollection = new RpcCollection()
+  const web3 = new Web3(rpcCollection.getWeb3Provider(Chain.Polygon))
   const blockEvents = new BlockEvents()
   afterEach((): void => {
     blockEvents.cleanup()

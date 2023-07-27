@@ -1,14 +1,16 @@
 import {Web3} from "web3"
 import {Admin} from "kafkajs"
 import {KafkaService, KafkaServiceInstance} from "./index"
-import {RPCS} from "../enums/rpcs"
+import {Chain, RpcCollection} from "../enums/rpcs";
 
 export class KafkaAdmin {
   kafkaService: KafkaService
+  rpcCollection: RpcCollection
   admin: Admin
 
   constructor(kafkaService: KafkaService) {
     this.kafkaService = kafkaService
+    this.rpcCollection = new RpcCollection()
     process.on('exit', async () => {
       await this.admin?.disconnect()
     })
@@ -23,7 +25,7 @@ export class KafkaAdmin {
   }
 
   async createTopicFromEventSignature(eventSignature: string): Promise<void> {
-    const web3 = new Web3(RPCS.POLYGON)
+    const web3 = new Web3(this.rpcCollection.getWeb3Provider(Chain.Polygon))
     const eventHash = web3.eth.abi.encodeEventSignature(eventSignature)
     await this.createTopic(eventHash)
   }

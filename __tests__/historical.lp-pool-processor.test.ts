@@ -7,6 +7,12 @@ class TestEvent extends AbstractEvent {
   constructor(log: LogDescription) {
     super([], log)
   }
+
+  toJSON(): object {
+    return {
+      ...this.log
+    }
+  }
 }
 describe('Tests LP Pool Processor', () => {
   const log: LogDescription = {

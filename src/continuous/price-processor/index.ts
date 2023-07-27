@@ -24,8 +24,8 @@ export default class PriceProcessor {
     this.uniswapObserver.existingUniswapAddresses.forEach(async (address) => {
       const reserves = await getReserves(this.web3, address)
       const pair = await fetchPairAddresses(this.web3, address)
-      this.producer.send({
-        topic: await this.createPriceTopic(chain, address, pair),
+      await this.producer.send({
+        topic: this.createPriceTopic(chain, address, pair),
         messages: [{
           key: this.createMessageKey(chain, pair, blockNumber),
           value: JSON.stringify({

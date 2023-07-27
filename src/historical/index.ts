@@ -1,11 +1,11 @@
-import {RPCS} from "../enums/rpcs"
+import {Chain} from "../enums/rpcs"
 import {UniswapFactoryObserver} from "./uniswap-observer"
 import uniswapState from "../../uniswapFactoryObserver.state.json"
 import {LpPoolProcessor} from "./lp-pool-processor"
 import {AdminFactory} from "../kafka/admin"
 
 async function processHistoricalEvents(): Promise<void> {
-  const uniswapFactoryObserver = new UniswapFactoryObserver(RPCS.POLYGON, uniswapState.observedEventSignatures)
+  const uniswapFactoryObserver = new UniswapFactoryObserver(Chain.Polygon, uniswapState.observedEventSignatures)
   const blockNumber = await uniswapFactoryObserver.web3.eth.getBlockNumber()
   await uniswapFactoryObserver.scanForUniswapFactories(uniswapState.lastBlockChecked, Number(blockNumber.toString()))
     .then(() => console.info("Done processing historical events"))
