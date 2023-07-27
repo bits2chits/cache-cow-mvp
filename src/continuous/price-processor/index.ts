@@ -3,23 +3,27 @@ import {Log, Web3} from 'web3';
 import { UniswapFactoryObserver } from '../../historical/uniswap-observer/index';
 import { KafkaProducer } from "../../kafka/producer";
 import { Pair, calcPrice, fetchPairAddresses, getReserves } from "../../main";
+import BaseProcessor from "../../processor";
+import { ProcessorInterface } from "../../processor/types";
 
-export default class PriceProcessor {
+export default class PriceProcessor extends BaseProcessor implements ProcessorInterface {
   web3: Web3
   blockEvents: BlockEvents
   uniswapObserver: UniswapFactoryObserver
   producer: KafkaProducer
   lastProcessedBlock: number
   constructor(web3: Web3, blockEvents: BlockEvents, uniswapObserver: UniswapFactoryObserver, producer: KafkaProducer) {
+    super()
     this.web3 = web3
     this.blockEvents = blockEvents
     this.uniswapObserver = uniswapObserver
     this.producer = producer
   }
 
-  initialize(): void {
+  async initialize(): Promise<void> {
     this.blockEvents.onNewBlock(this.onBlock.bind(this))
     this.blockEvents.onLogData(this.onLogData.bind(this))
+    await super.initialize()
   }
 
   async onLogData(chain: string, log: Log): Promise<void> {
@@ -52,5 +56,9 @@ export default class PriceProcessor {
 
   createPriceTopic(chain: string, pairAddress: string, pair: Pair): string {
     return `${chain}-${pairAddress}-${pair.token0}-${pair.token1}-price`
+  }
+
+  async shutdown(): Promise<void> {
+    await super.shutdown()
   }
 }
