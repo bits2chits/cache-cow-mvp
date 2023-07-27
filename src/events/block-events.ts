@@ -1,12 +1,19 @@
 import { EventEmitter } from "node:events"
 import BaseEvents from "./base-emitter"
-import { BlockError, BlockErrorListener, BlockEventsEnum, NewBlockListener } from "./types"
-import {BlockData} from "../poller/block-processor/types";
-import {Log} from "web3";
+import {
+  BlockDataListener,
+  BlockError,
+  BlockErrorListener,
+  BlockEventsEnum,
+  LogDataListener,
+  NewBlockListener
+} from "./types"
+import {BlockData} from "../poller/block-processor/types"
+import {Log} from "web3"
 
 export class BlockEventEmitter extends EventEmitter {}
 
-export default class BlockEvents extends BaseEvents<BlockEventsEnum, NewBlockListener | BlockErrorListener> {
+export default class BlockEvents extends BaseEvents<BlockEventsEnum, NewBlockListener | BlockDataListener | LogDataListener | BlockErrorListener> {
 
   constructor() {
     super(new BlockEventEmitter())
@@ -16,12 +23,12 @@ export default class BlockEvents extends BaseEvents<BlockEventsEnum, NewBlockLis
     this.emitter.emit(BlockEventsEnum['new-block'], chain, blockNumber)
   }
 
-  blockData(chain: string, data: BlockData): void {
-    this.emitter.emit(BlockEventsEnum['block-data'], chain, data)
+  blockData(chain: string, block: BlockData): void {
+    this.emitter.emit(BlockEventsEnum['block-data'], chain, block)
   }
 
-  logData(chain: string, topic: string, log: Log): void {
-    this.emitter.emit(BlockEventsEnum[topic], chain, log)
+  logData(chain: string, log: Log): void {
+    this.emitter.emit(BlockEventsEnum['log-data'], chain, log)
   }
 
   blockError(chain: string, message: string): void {
@@ -34,5 +41,13 @@ export default class BlockEvents extends BaseEvents<BlockEventsEnum, NewBlockLis
 
   onBlockError(cb: BlockErrorListener): void {
     this.on(BlockEventsEnum['block-error'], cb)
+  }
+
+  onBlockData(cb: BlockDataListener): void {
+    this.on(BlockEventsEnum['block-data'], cb)
+  }
+
+  onLogData(cb: LogDataListener): void {
+    this.on(BlockEventsEnum['log-data'], cb)
   }
 }
