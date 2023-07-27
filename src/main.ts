@@ -1,4 +1,4 @@
-import {Web3} from 'web3'
+import {Block, Web3} from 'web3'
 import {MATIC_USDC} from './enums/pairs'
 import uniswapFactoryAbi from './abis/uniswap-factory.json'
 import uniswapV2Abi from './abis/uniswap-v2.json'
@@ -7,7 +7,11 @@ export async function fetchBlockNumber(web3: Web3): Promise<number> {
   return Number((await web3.eth.getBlockNumber()).toString())
 }
 
-interface Pair {
+export async function fetchBlock(web3: Web3, blockNumber: string|number, returnTransactionObjects: boolean): Promise<Block> {
+  return await web3.eth.getBlock(blockNumber, returnTransactionObjects)
+}
+
+export interface Pair {
   token0: string
   token1: string
 }
@@ -18,7 +22,14 @@ export async function fetchPairAddress(web3: Web3, pair: Pair): Promise<string> 
   return pairAddress
 }
 
-interface Reserves {
+export async function fetchPairAddresses(web3: Web3, address: string): Promise<Pair> {
+  const uniswapPairContract = new web3.eth.Contract(uniswapV2Abi, address)
+  const token0 = await (uniswapPairContract.methods as any).token0().call()
+  const token1 = await (uniswapPairContract.methods as any).token1().call()
+  return { token0, token1 }
+}
+
+export interface Reserves {
   _reserve0: bigint
   _reserve1: bigint
   _blockTimestampLast: bigint
