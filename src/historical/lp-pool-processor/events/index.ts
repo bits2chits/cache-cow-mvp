@@ -1,6 +1,6 @@
 import {LogDescription} from "ethers"
-import {AbstractEvent} from "./AbstractEvent"
-import {PairCreated} from "./PairCreated"
+import {AbstractEvent} from "./abstract-event"
+import {PairCreated} from "./pair-created"
 
 export async function eventFromSignature(log: LogDescription): Promise<AbstractEvent> {
   switch (log.topic) {

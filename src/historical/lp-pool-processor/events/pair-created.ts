@@ -1,7 +1,7 @@
 
-import {LogDescription} from "ethers"
-import {AbstractEvent} from "./AbstractEvent"
 import UniswapFactoryAbi from "../../../abis/uniswap-factory.json"
+import {AbstractEvent} from "./abstract-event"
+import {LogDescription} from "ethers"
 
 export class PairCreated extends AbstractEvent {
 

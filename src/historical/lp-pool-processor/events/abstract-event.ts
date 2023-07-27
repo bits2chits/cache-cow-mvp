@@ -1,5 +1,5 @@
-import {LogDescription} from "ethers"
 import {AbiElement, AbiInputsElement} from "../types"
+import {LogDescription} from "ethers"
 
 export abstract class AbstractEvent {
   abiElement: AbiElement
