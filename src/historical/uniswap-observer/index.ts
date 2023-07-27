@@ -1,12 +1,12 @@
 import {Filter, Log, Web3} from "web3"
-import {RPCS} from "../../enums/rpcs"
 import {SYSTEM_EVENT_TOPICS} from "../../kafka"
 import {AdminFactory, KafkaAdmin} from "../../kafka/admin"
 import {KafkaProducer, ProducerFactory} from "../../kafka/producer"
-import {LogAndChain} from "./Types"
+import {LogAndChain} from "./types"
 import {sleep} from "../../libs/sleep"
 import fs from "fs"
 import {clearInterval} from "timers"
+import {Chain, RpcCollection} from "../../enums/rpcs";
 
 // This won't exist in code for long, so no need to make any config files.
 const eventSignaturesObserved = [
@@ -16,7 +16,8 @@ const eventSignaturesObserved = [
 export class UniswapFactoryObserver {
   producer: KafkaProducer
   admin: KafkaAdmin
-  rpc: RPCS
+  chain: Chain
+  rpcCollection: RpcCollection
   web3: Web3
   initialized: boolean
   logInterval = 1000
@@ -27,11 +28,12 @@ export class UniswapFactoryObserver {
   observedEventSignatures: string[]
 
   constructor(
-    rpc: RPCS,
+    chain: Chain,
     config: string[] = eventSignaturesObserved,
   ) {
-    this.rpc = rpc
-    this.web3 = new Web3(rpc)
+    this.chain = chain
+    this.rpcCollection = new RpcCollection()
+    this.web3 = new Web3(this.rpcCollection.getWeb3Provider(chain))
     this.observedEventSignatures = config.length > 0 ? config : eventSignaturesObserved
     this.initialize()
       .then(() => {
@@ -140,7 +142,7 @@ export class UniswapFactoryObserver {
         })
 
         for (const log of logs) {
-          await this.addAddress({...log, chainId: this.rpc}) // TODO: Make RPC structure better
+          await this.addAddress({...log, chain: this.chain}) // TODO: Make RPC structure better
         }
       } catch (e) {
         console.error(`Failed to fetch logs for block range ${i}-${i + 500}. Retrying`, e)

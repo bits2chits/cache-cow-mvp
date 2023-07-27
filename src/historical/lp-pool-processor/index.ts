@@ -1,19 +1,20 @@
-import {ethers, Interface, JsonRpcProvider} from "ethers"
-import {RPCS} from "../../enums/rpcs"
+import {ethers, Interface} from "ethers"
 import {SYSTEM_EVENT_TOPICS} from "../../kafka"
 import {AdminFactory, KafkaAdmin} from "../../kafka/admin"
 import {ConsumerFactory, KafkaConsumer} from "../../kafka/consumer"
 import {KafkaProducer, ProducerFactory} from "../../kafka/producer"
 import {PairCreated} from "./events/PairCreated"
-import {LpPoolAddedMessage} from "./Types"
+import {LpPoolAddedMessage} from "./types"
 import Erc20Abi from "../../abis/erc20.json"
 import UniswapFactoryAbi from "../../abis/uniswap-factory.json"
 import {sleep} from "../../libs/sleep"
+import {RpcCollection} from "../../enums/rpcs"
 
 export class LpPoolProcessor {
   running: boolean
   uniswapInterface: Interface
   erc20Interface: Interface
+  rpcCollection: RpcCollection
   admin: KafkaAdmin
   producer: KafkaProducer
   consumer: KafkaConsumer
@@ -21,6 +22,7 @@ export class LpPoolProcessor {
   constructor() {
     this.uniswapInterface = new ethers.Interface(UniswapFactoryAbi)
     this.erc20Interface = new ethers.Interface(Erc20Abi)
+    this.rpcCollection = new RpcCollection()
     this.initialize()
       .catch(console.error)
   }
@@ -50,8 +52,8 @@ export class LpPoolProcessor {
     }
   }
 
-  async fetchErc20Metadata(event: PairCreated): Promise<PairCreated> {
-    const provider = new JsonRpcProvider(RPCS.POLYGON)
+  async fetchErc20Metadata(chain: string, event: PairCreated): Promise<PairCreated> {
+    const provider = this.rpcCollection.getEthersProvider(chain)
     const token0Contract = new ethers.Contract(event.get("token0"), this.erc20Interface, provider)
     const token1Contract = new ethers.Contract(event.get("token1"), this.erc20Interface, provider)
     event.set("token0Symbol", await token0Contract.symbol())
@@ -63,8 +65,9 @@ export class LpPoolProcessor {
 
   async processLpPoolAddedMessage(message: LpPoolAddedMessage): Promise<void> {
     try {
-      const eventFromLog = new PairCreated(this.uniswapInterface.parseLog(message))
-      const event = await this.fetchErc20Metadata(eventFromLog)
+      const {chain, ...log} = message
+      const eventFromLog = new PairCreated(this.uniswapInterface.parseLog(log))
+      const event = await this.fetchErc20Metadata(chain, eventFromLog)
       await this.producer.send({
         topic: SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY,
         messages: [{

@@ -1,5 +1,5 @@
 import {LogDescription} from "ethers"
-import {AbiElement, AbiInputsElement} from "../Types"
+import {AbiElement, AbiInputsElement} from "../types"
 
 export abstract class AbstractEvent {
   abiElement: AbiElement
@@ -20,10 +20,20 @@ export abstract class AbstractEvent {
     this.setLogValues()
   }
 
+  get<T>(key: string): T {
+    return this?.[key]
+  }
+
+  set<T>(key: string, value: T): void {
+    this[key] = value
+  }
+
   setLogValues(): void {
     this.abiElement.inputs
       .forEach((currentValue: AbiInputsElement, currentIndex: number): void => {
         this[currentValue.name || currentIndex] = this.log.args[currentIndex]
       })
   }
+
+  abstract toJSON(): object
 }

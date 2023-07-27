@@ -1,11 +1,13 @@
 import Web3 from "web3"
-import { MATIC_USDC } from "../enums/pairs"
 import { poll } from "../poller"
 import { fetchBlockNumber } from "../main"
 import BlockEvents from "../events/block-events"
+import {Chain, RpcCollection} from "../enums/rpcs";
 
 async function main(): Promise<void> {
-  const web3 = new Web3(MATIC_USDC.RPC)
+  const chain = Chain.Polygon
+  const rpcCollection = new RpcCollection()
+  const web3 = new Web3(rpcCollection.getWeb3Provider(chain))
   const blockEvents = new BlockEvents()
   let blockNumber = await fetchBlockNumber(web3)
   // @TODO register pair event listeners
@@ -15,7 +17,7 @@ async function main(): Promise<void> {
     shouldStop: async (block) => {
       if (block > blockNumber) {
         blockNumber = block
-        blockEvents.newBlock(MATIC_USDC.CHAIN, block)
+        blockEvents.newBlock(chain, block)
       }
       return false
     },

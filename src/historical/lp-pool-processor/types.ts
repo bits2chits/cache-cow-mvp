@@ -1,3 +1,4 @@
+import {Chain} from "../../enums/rpcs"
 
 export interface AbiInputsElement {
   indexed?: boolean
@@ -19,6 +20,7 @@ export interface AbiElement {
 }
 
 export interface LpPoolAddedMessage {
+  chain: Chain
   id?: string;
   removed?: boolean;
   logIndex?: number;

@@ -2,9 +2,10 @@ import {jest} from '@jest/globals'
 import {UniswapFactoryObserver} from "../src/historical/uniswap-observer"
 import {Filter, Log, Web3} from "web3"
 import {AdminFactory, KafkaAdmin} from "../src/kafka/admin"
-import {RPCS} from "../src/enums/rpcs"
+import {Chain, RpcCollection} from "../src/enums/rpcs"
 
 describe('Tests Uniswap Observer', () => {
+  const rpcCollection = new RpcCollection()
   const contractAddress = '0x123'
   const eventSignature = "Event(uint256)"
   let admin: KafkaAdmin
@@ -12,7 +13,7 @@ describe('Tests Uniswap Observer', () => {
   let eventSignatureHash: string
   beforeAll(async () => {
     admin = await AdminFactory.getAdmin()
-    web3 = new Web3(RPCS.POLYGON)
+    web3 = new Web3(rpcCollection.getWeb3Provider(Chain.Polygon))
     eventSignatureHash = web3.eth.abi.encodeEventSignature(eventSignature)
   })
   afterAll(async () => {
@@ -20,7 +21,7 @@ describe('Tests Uniswap Observer', () => {
   })
 
   it('should create a topic for each new uniswap factory address', async () => {
-    const observer = new UniswapFactoryObserver(RPCS.POLYGON, [eventSignature])
+    const observer = new UniswapFactoryObserver(Chain.Polygon, [eventSignature])
     const addAddressSpy = jest.spyOn(observer, 'addAddress')
     const getPastLogsSpy = jest.spyOn(observer, 'getPastLogs')
     getPastLogsSpy.mockImplementation((_: Filter) => {
@@ -37,7 +38,7 @@ describe('Tests Uniswap Observer', () => {
     await observer.shutdown()
   })
   it('should add topics to observedTopics', async () => {
-    const observer = new UniswapFactoryObserver(RPCS.POLYGON, [eventSignature])
+    const observer = new UniswapFactoryObserver(Chain.Polygon, [eventSignature])
     await expect(observer.logTopicIsObserved(eventSignatureHash)).resolves.toBeTruthy()
     await observer.shutdown()
   })
