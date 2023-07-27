@@ -1,5 +1,5 @@
 import BlockEvents from "../../events/block-events";
-import { Web3 } from 'web3';
+import {Log, Web3} from 'web3';
 import { UniswapFactoryObserver } from '../../historical/uniswap-observer/index';
 import { KafkaProducer } from "../../kafka/producer";
 import { Pair, calcPrice, fetchPairAddresses, getReserves } from "../../main";
@@ -9,6 +9,7 @@ export default class PriceProcessor {
   blockEvents: BlockEvents
   uniswapObserver: UniswapFactoryObserver
   producer: KafkaProducer
+  lastProcessedBlock: number
   constructor(web3: Web3, blockEvents: BlockEvents, uniswapObserver: UniswapFactoryObserver, producer: KafkaProducer) {
     this.web3 = web3
     this.blockEvents = blockEvents
@@ -18,6 +19,11 @@ export default class PriceProcessor {
 
   initialize(): void {
     this.blockEvents.onNewBlock(this.onBlock.bind(this))
+    this.blockEvents.onLogData(this.onLogData.bind(this))
+  }
+
+  async onLogData(chain: string, log: Log): Promise<void> {
+    console.info(`Received log from ${chain} topic: ${log.topics[0]}`)
   }
 
   onBlock(chain: string, blockNumber: number): void {
@@ -36,6 +42,7 @@ export default class PriceProcessor {
           })
         }]
       })
+      this.lastProcessedBlock = blockNumber
     })
   }
 

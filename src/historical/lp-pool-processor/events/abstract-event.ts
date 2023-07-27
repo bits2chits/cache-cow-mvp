@@ -31,7 +31,7 @@ export abstract class AbstractEvent {
   setLogValues(): void {
     this.abiElement.inputs
       .forEach((currentValue: AbiInputsElement, currentIndex: number): void => {
-        this[currentValue.name || currentIndex] = this.log.args[currentIndex]
+        this.set(currentValue.name || currentIndex.toString(), this.log.args[currentIndex])
       })
   }
 
