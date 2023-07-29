@@ -10,9 +10,11 @@ import {
 } from "./types"
 import {BlockData} from "../poller/block-processor/types"
 import {Log} from "web3"
+import {singleton} from 'tsyringe'
 
 export class BlockEventEmitter extends EventEmitter {}
 
+@singleton()
 export default class BlockEvents extends BaseEvents<BlockEventsEnum, NewBlockListener | BlockDataListener | LogDataListener | BlockErrorListener> {
 
   constructor() {

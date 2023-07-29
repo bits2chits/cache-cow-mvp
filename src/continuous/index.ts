@@ -1,18 +1,23 @@
-import Web3 from "web3"
+import 'reflect-metadata'
 import { poll } from "../poller"
 import { fetchBlockNumber } from "../main"
 import BlockEvents from "../events/block-events"
-import {Chain, RpcCollection} from "../enums/rpcs";
+import {Chain} from "../enums/rpcs";
 import {BlockProcessor} from "../poller/block-processor/block-processor"
 import UniswapObserverState from "../../uniswapFactoryObserver.state.json"
+import { container } from "tsyringe";
+import { Web3Wrapper } from '../libs/web3-wrapper';
+
+container.register<typeof UniswapObserverState>("UniswapObserverState", { useValue: UniswapObserverState })
 
 async function main(
-  chain = Chain.Polygon,
-  rpcCollection = new RpcCollection(),
-  blockEvents = new BlockEvents(),
-  web3 = new Web3(rpcCollection.getWeb3Provider(chain)),
-  blockProcessor = new BlockProcessor(web3, UniswapObserverState.observedEventSignatures)
+  chain = Chain.Polygon
 ): Promise<void> {
+  const blockProcessor = container.resolve<BlockProcessor>(BlockProcessor)
+  const web3Wrapper = container.resolve<Web3Wrapper>(Web3Wrapper)
+  const web3 = web3Wrapper.getWeb3(chain)
+  const blockEvents = container.resolve<BlockEvents>(BlockEvents)
+
   blockProcessor.initialize()
   let blockNumber = await fetchBlockNumber(web3)
   // @TODO register pair event listeners

@@ -26,7 +26,7 @@ export default class PriceProcessor extends BaseProcessor implements ProcessorIn
   }
 
   async onLogData(chain: string, log: Log): Promise<void> {
-    console.info(`Received log from ${chain} topic: ${log.topics[0]}`)
+    console.info(`Received log from ${chain} topic: ${log?.topics?.[0]}`)
   }
 
   onBlock(chain: string, blockNumber: number): void {

@@ -42,7 +42,9 @@
     "@types/web3": "^1.2.2",
     "ethers": "^6.6.5",
     "kafkajs": "^2.2.4",
+    "reflect-metadata": "^0.1.13",
     "tslib": "~2.5",
+    "tsyringe": "^4.8.0",
     "web3": "^4.0.3",
     "web3-utils": "^4.0.2"
   },

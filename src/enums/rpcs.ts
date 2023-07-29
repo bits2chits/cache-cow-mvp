@@ -1,8 +1,9 @@
 
 import {Web3, Web3BaseProvider} from "web3"
 import {JsonRpcProvider} from "ethers"
+import { singleton } from "tsyringe"
 
-enum ChainRpcUrls {
+export enum ChainRpcUrls {
   Polygon = "https://polygon-rpc.com/"
 }
 export enum Chain {
@@ -16,6 +17,8 @@ type EthersRpcProviders = {
 type Web3RpcProviders = {
   [key: string | symbol]: Web3BaseProvider
 }
+
+@singleton()
 export class RpcCollection {
   web3Providers: Web3RpcProviders = {}
   ethersProviders: EthersRpcProviders = {}
