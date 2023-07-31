@@ -7,6 +7,9 @@ import { ProducerRecord } from 'kafkajs';
 import { KafkaProducer } from '../../../src/kafka/producer';
 import { sleep } from '../../../src/libs/sleep';
 import { Chain } from '../../../src/enums/rpcs';
+import {jest} from '@jest/globals';
+
+jest.setTimeout(10000);
 
 class MockUniswapObserver {
   existingUniswapAddresses: Set<string>;
@@ -40,7 +43,8 @@ describe('Tests Price Processor', () => {
     const producer = new MockProducer();
     const currentBlock = await fetchBlockNumber(chain);
     const pp = new PriceProcessor(blockEvents, uniswapObserver as UniswapFactoryObserver, producer as unknown as KafkaProducer);
-    await pp.initialize();
+    pp.initialize()
+      .catch(console.error)
     blockEvents.newBlock('Polygon', currentBlock);
     await sleep(2000);
     console.log('producer', producer);

@@ -22,6 +22,7 @@ export default class PriceProcessor extends BaseProcessor implements ProcessorIn
   async initialize(): Promise<void> {
     this.blockEvents.onNewBlock(this.onBlock.bind(this));
     this.blockEvents.onLogData(this.onLogData.bind(this));
+    await super.start()
   }
 
   async onLogData(chain: string, log: Log): Promise<void> {
