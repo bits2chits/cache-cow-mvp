@@ -39,12 +39,10 @@
   "dependencies": {
     "@types/jest": "^29.5.2",
     "@types/kafkajs": "^1.9.0",
-    "@types/web3": "^1.2.2",
     "ethers": "^6.6.5",
     "kafkajs": "^2.2.4",
     "tslib": "~2.5",
-    "web3": "^4.0.3",
-    "web3-utils": "^4.0.2"
+    "uuid": "^9.0.0"
   },
   "volta": {
     "node": "18.12.1"

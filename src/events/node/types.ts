@@ -1,4 +1,4 @@
-import { Block, Log, TransactionReceipt } from 'web3'
+import { Block, Log, TransactionReceipt } from 'ethers';
 
 export interface BaseEventListener<EventsEnum, Listener extends (...args: any[]) => void> {
   event: EventsEnum | (string | symbol)

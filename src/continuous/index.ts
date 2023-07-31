@@ -1,37 +1,34 @@
-import Web3 from "web3"
-import { poll } from "../poller"
-import { fetchBlockNumber } from "../main"
-import BlockEvents from "../events/node/block-events"
-import {Chain, RpcCollection} from "../enums/rpcs"
-import {BlockProcessor} from "../poller/block-processor/block-processor"
-import UniswapObserverState from "../../uniswapFactoryObserver.state.json"
+import { poll } from '../poller';
+import { fetchBlockNumber } from '../main';
+import BlockEvents from '../events/node/block-events';
+import { Chain } from '../enums/rpcs';
+import { BlockProcessor } from '../poller/block-processor/block-processor';
+import UniswapObserverState from '../../uniswapFactoryObserver.state.json';
 
 async function main(
   chain = Chain.Polygon,
-  rpcCollection = new RpcCollection(),
   blockEvents = new BlockEvents(),
-  web3 = new Web3(rpcCollection.getWeb3Provider(chain)),
-  blockProcessor = new BlockProcessor(web3, UniswapObserverState.observedEventSignatures)
+  blockProcessor = new BlockProcessor(UniswapObserverState.observedEventSignatures),
 ): Promise<void> {
-  blockProcessor.initialize()
-  let blockNumber = await fetchBlockNumber(web3)
+  blockProcessor.initialize();
+  let blockNumber = await fetchBlockNumber(chain);
   // @TODO register pair event listeners
-  await poll(web3, {
+  await poll(chain, {
     interval: 500,
     startAtBlock: blockNumber,
     shouldStop: async (block) => {
       if (block > blockNumber) {
-        blockNumber = block
-        blockEvents.newBlock(chain, block)
+        blockNumber = block;
+        blockEvents.newBlock(chain, block);
       }
-      return false
+      return false;
     },
     onAbort: async () => {
-      blockEvents.cleanup()
-    }
-  })
+      blockEvents.cleanup();
+    },
+  });
 }
 
 main()
-  .then(() => console.info("Process exited successfully"))
-  .catch(console.error)
+  .then(() => console.info('Process exited successfully'))
+  .catch(console.error);

@@ -9,7 +9,7 @@ import {
   LogDataListener,
   NewBlockListener,
 } from './types';
-import {Log} from "web3"
+import { Log } from 'ethers';
 
 export class BlockEventEmitter extends EventEmitter {}
 
