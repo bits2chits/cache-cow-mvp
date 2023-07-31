@@ -4,7 +4,8 @@ import uniswapState from '../../uniswapFactoryObserver.state.json';
 import { LpPoolProcessor } from './lp-pool-processor';
 import { AdminFactory } from '../kafka/admin';
 
-const rpcCollection = new RpcCollection()
+const rpcCollection = new RpcCollection();
+
 async function processHistoricalEvents(): Promise<void> {
   const uniswapFactoryObserver = new UniswapFactoryObserver(Chain.Polygon, uniswapState.observedEventSignatures);
   const blockNumber = await rpcCollection.getEthersProvider(Chain.Polygon).getBlockNumber();
@@ -16,6 +17,7 @@ async function processHistoricalEvents(): Promise<void> {
 
 async function handleLpPoolAddedEvents(): Promise<void> {
   const lpPoolProcessor = new LpPoolProcessor();
+  await lpPoolProcessor.initialize();
 }
 
 async function main(reset: boolean): Promise<void> {

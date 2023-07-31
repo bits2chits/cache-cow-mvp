@@ -1,9 +1,9 @@
 import { poll } from '../poller';
-import { fetchBlockNumber } from '../main';
 import BlockEvents from '../events/node/block-events';
 import { Chain } from '../enums/rpcs';
 import { BlockProcessor } from '../poller/block-processor/block-processor';
 import UniswapObserverState from '../../uniswapFactoryObserver.state.json';
+import { fetchBlockNumber } from './utils';
 
 async function main(
   chain = Chain.Polygon,

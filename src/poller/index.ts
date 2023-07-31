@@ -1,5 +1,5 @@
 import { sleep } from '../libs/sleep';
-import { fetchBlockNumber } from '../main';
+import { fetchBlockNumber } from '../continuous/utils';
 
 interface PollConfig {
   interval: number;
