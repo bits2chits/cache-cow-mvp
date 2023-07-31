@@ -1,8 +1,7 @@
 import {Block, Log, TransactionReceipt, Web3} from "web3"
-import BlockEvents from "../../events/block-events"
-import {BlockEventListener, BlockEventsEnum, NewBlockListener} from "../../events/types"
+import BlockEvents from "../../events/node/block-events"
+import { BlockData, BlockEventListener, BlockEventsEnum, NewBlockListener } from '../../events/node/types'
 import {RpcCollection} from "../../enums/rpcs"
-import {BlockData} from "./types";
 
 export class BlockProcessor implements BlockEventListener {
   web3: Web3

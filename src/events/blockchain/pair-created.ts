@@ -1,5 +1,5 @@
 
-import UniswapFactoryAbi from "../../../abis/uniswap-factory.json"
+import UniswapFactoryAbi from "../../abis/uniswap-factory.json"
 import {AbstractEvent} from "./abstract-event"
 import {LogDescription} from "ethers"
 

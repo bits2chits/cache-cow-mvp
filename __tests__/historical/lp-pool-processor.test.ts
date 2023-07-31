@@ -1,7 +1,7 @@
 import {FormatType, LogDescription, Result} from "ethers"
 import {uuidV4} from "web3-utils"
-import {PairCreated} from "../../src/historical/lp-pool-processor/events/pair-created"
-import {AbstractEvent} from "../../src/historical/lp-pool-processor/events/abstract-event"
+import {PairCreated} from "../../src/events/blockchain/pair-created"
+import {AbstractEvent} from "../../src/events/blockchain/abstract-event"
 
 class TestEvent extends AbstractEvent {
   constructor(log: LogDescription) {

@@ -1,5 +1,5 @@
 
-import BlockEvents from "../../src/events/block-events"
+import BlockEvents from "../../src/events/node/block-events"
 
 describe('Tests block events class', () => {
   const blockEvents = new BlockEvents()
@@ -50,5 +50,3 @@ describe('Tests block events class', () => {
     expect(events[1].chain).toEqual('Harmony')
   })
 });
-
-//"0xc35DADB65012eC5796536bD9864eD8773aBc74C4" // SUSHISWAP

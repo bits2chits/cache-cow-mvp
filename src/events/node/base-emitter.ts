@@ -1,5 +1,5 @@
-import { EventEmitter } from "node:events"
 import { BaseEventListener } from "./types"
+import { EventEmitter } from "node:events"
 
 export class BaseEventEmitter extends EventEmitter {}
 

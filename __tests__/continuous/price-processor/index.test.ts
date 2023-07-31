@@ -1,7 +1,7 @@
 import Web3 from "web3"
 import { MATIC_USDC } from "../../../src/enums/pairs"
 import PriceProcessor from '../../../src/continuous/price-processor/index'
-import BlockEvents from "../../../src/events/block-events"
+import BlockEvents from "../../../src/events/node/block-events"
 import { fetchBlockNumber, fetchPairAddress } from "../../../src/main"
 import { UniswapFactoryObserver } from "../../../src/historical/uniswap-observer"
 import { ProducerRecord } from "kafkajs"
@@ -24,9 +24,14 @@ class MockProducer {
 }
 
 describe('Tests Price Processor', () => {
-  const rpcCollection = new RpcCollection()
-  const web3 = new Web3(rpcCollection.getWeb3Provider(Chain.Polygon))
-  const blockEvents = new BlockEvents()
+  let rpcCollection: RpcCollection
+  let web3: Web3
+  let blockEvents: BlockEvents
+  beforeEach(async (): Promise<void> => {
+    rpcCollection = new RpcCollection()
+    web3 = new Web3(rpcCollection.getWeb3Provider(Chain.Polygon))
+    blockEvents = await new BlockEvents()
+  })
   afterEach((): void => {
     blockEvents.cleanup()
   });
@@ -37,7 +42,7 @@ describe('Tests Price Processor', () => {
     const producer = new MockProducer()
     const currentBlock = await fetchBlockNumber(web3)
     const pp = new PriceProcessor(web3, blockEvents, uniswapObserver as UniswapFactoryObserver, producer as unknown as KafkaProducer)
-    pp.initialize()
+    await pp.initialize()
     blockEvents.newBlock('Polygon', currentBlock)
     await sleep(2000)
     console.log('producer', producer)

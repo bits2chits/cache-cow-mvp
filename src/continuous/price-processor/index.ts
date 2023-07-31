@@ -1,10 +1,10 @@
-import BlockEvents from "../../events/block-events";
-import {Log, Web3} from 'web3';
-import { UniswapFactoryObserver } from '../../historical/uniswap-observer/index';
-import { KafkaProducer } from "../../kafka/producer";
-import { Pair, calcPrice, fetchPairAddresses, getReserves } from "../../main";
-import BaseProcessor from "../../processor";
-import { ProcessorInterface } from "../../processor/types";
+import BlockEvents from "../../events/node/block-events"
+import {Log, Web3} from 'web3'
+import { UniswapFactoryObserver } from '../../historical/uniswap-observer'
+import { KafkaProducer } from "../../kafka/producer"
+import { Pair, calcPrice, fetchPairAddresses, getReserves } from "../../main"
+import BaseProcessor from "../../processor"
+import { ProcessorInterface } from "../../processor/types"
 
 export default class PriceProcessor extends BaseProcessor implements ProcessorInterface {
   web3: Web3

@@ -1,14 +1,14 @@
 import { EventEmitter } from "node:events"
 import BaseEvents from "./base-emitter"
 import {
+  BlockData,
   BlockDataListener,
   BlockError,
   BlockErrorListener,
   BlockEventsEnum,
   LogDataListener,
-  NewBlockListener
-} from "./types"
-import {BlockData} from "../poller/block-processor/types"
+  NewBlockListener,
+} from './types';
 import {Log} from "web3"
 
 export class BlockEventEmitter extends EventEmitter {}

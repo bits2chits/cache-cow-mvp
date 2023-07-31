@@ -1,14 +1,9 @@
-import {BlockData} from "../poller/block-processor/types";
-import {Log} from "web3";
-
-export enum BaseEventsEnum {}
+import { Block, Log, TransactionReceipt } from 'web3'
 
 export interface BaseEventListener<EventsEnum, Listener extends (...args: any[]) => void> {
   event: EventsEnum | (string | symbol)
   listener: Listener
 }
-
-export class BaseError extends Error {}
 
 export enum BlockEventsEnum {
   ['new-block'] = 'new-block',
@@ -26,4 +21,9 @@ export type BlockErrorListener = (error: BlockError) => void | Promise<void>
 export interface BlockEventListener {
   event: BlockEventsEnum
   listener: NewBlockListener | BlockErrorListener
+}
+
+export interface BlockData {
+  block: Block
+  transactionReceipts: TransactionReceipt[]
 }

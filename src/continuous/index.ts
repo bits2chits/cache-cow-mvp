@@ -1,8 +1,8 @@
 import Web3 from "web3"
 import { poll } from "../poller"
 import { fetchBlockNumber } from "../main"
-import BlockEvents from "../events/block-events"
-import {Chain, RpcCollection} from "../enums/rpcs";
+import BlockEvents from "../events/node/block-events"
+import {Chain, RpcCollection} from "../enums/rpcs"
 import {BlockProcessor} from "../poller/block-processor/block-processor"
 import UniswapObserverState from "../../uniswapFactoryObserver.state.json"
 

@@ -7,7 +7,7 @@ import {clearInterval} from "timers"
 import {Filter, Log, Web3} from "web3"
 import {Chain, RpcCollection} from "../../enums/rpcs"
 import UniswapObserverState from "../../../uniswapFactoryObserver.state.json"
-import BlockEvents from "../../events/block-events"
+import BlockEvents from "../../events/node/block-events"
 
 export class UniswapFactoryObserver {
   producer: KafkaProducer

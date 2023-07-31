@@ -1,5 +1,5 @@
-import { sleep } from "../libs/sleep"
 import { ProcessorInterface } from "./types"
+import { sleep } from "../libs/sleep"
 
 export default abstract class BaseProcessor implements ProcessorInterface {
   protected running: boolean
