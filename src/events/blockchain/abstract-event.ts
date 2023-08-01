@@ -3,9 +3,10 @@ import {LogDescription} from "ethers"
 
 export abstract class AbstractEvent {
   abiElement: AbiElement
+  address: string
   log: LogDescription
 
-  protected constructor(abi: AbiElement[], log: LogDescription) {
+  protected constructor(abi: AbiElement[], address: string, log: LogDescription) {
     this.log = log
     for (const fragment of abi) {
       if (fragment.name === this.constructor.name

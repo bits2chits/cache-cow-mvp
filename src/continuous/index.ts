@@ -2,13 +2,12 @@ import { poll } from '../poller';
 import BlockEvents from '../events/node/block-events';
 import { Chain } from '../enums/rpcs';
 import { BlockProcessor } from '../poller/block-processor/block-processor';
-import UniswapObserverState from '../../uniswapFactoryObserver.state.json';
 import { fetchBlockNumber } from './utils';
 
-async function main(
-  chain = Chain.Polygon,
-  blockEvents = new BlockEvents(),
-  blockProcessor = new BlockProcessor(UniswapObserverState.observedEventSignatures),
+export async function startContinuousDataPolling(
+  chain: Chain,
+  blockEvents: BlockEvents,
+  blockProcessor: BlockProcessor
 ): Promise<void> {
   blockProcessor.initialize();
   let blockNumber = await fetchBlockNumber(chain);
@@ -28,7 +27,3 @@ async function main(
     },
   });
 }
-
-main()
-  .then(() => console.info('Process exited successfully'))
-  .catch(console.error);

@@ -56,8 +56,8 @@ export default class PriceProcessor extends BaseProcessor implements ProcessorIn
   }
 
   onBlock(chain: string, blockNumber: number): void {
+    console.log(blockNumber)
     this.uniswapObserver.existingUniswapAddresses.forEach(async (address) => {
-      console.log(chain)
       const reserves = await this.getReserves(chain, address);
       const pair = await this.fetchPairAddresses(chain, address);
       await this.producer.send({

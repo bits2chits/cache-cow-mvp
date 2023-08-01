@@ -31,9 +31,10 @@ export class KafkaAdmin {
     const topics = await admin.listTopics();
     if (!topics.includes(topic)) {
       await admin.createTopics({
-        waitForLeaders: false,
+        waitForLeaders: true,
         topics: [{
           topic,
+          numPartitions: 1,
           configEntries: [
             {
               name: 'cleanup.policy',

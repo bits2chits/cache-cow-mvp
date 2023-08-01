@@ -1,3 +1,5 @@
+import { Decimal } from 'decimal.js';
+
 export interface Reserves {
   _reserve0: bigint;
   _reserve1: bigint;
@@ -11,6 +13,6 @@ export interface Pair {
 }
 
 export interface PairPrice {
-  token0Price: number;
-  token1Price: number;
+  token0Price: string;
+  token1Price: string;
 }
