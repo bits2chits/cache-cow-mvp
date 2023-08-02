@@ -39,20 +39,21 @@ function App() {
   return (
     <Grid container flexDirection='column' className='App'>
       <Grid item>
-        <InputLabel id='pair-select-label'>Pairs</InputLabel>
-        <Select
-          labelId='pair-select-label'
-          id='pair-select'
-          value={pairFilter}
-          onChange={(event) => setPairFilter(event.target.value)}
-          sx={{
-            minWidth: '300px',
-          }}
-        >
-          {pairs.map((it, index) => (
-            <MenuItem key={`token0-${it}-${index}`} value={it}>{it}</MenuItem>
-          ))}
-        </Select>
+        {pairs.length > 0 && (<>
+          <InputLabel id='pair-select-label'>Pairs</InputLabel>
+          <Select
+            labelId='pair-select-label'
+            id='pair-select'
+            value={pairFilter}
+            onChange={(event) => setPairFilter(event.target.value)}
+            sx={{
+              minWidth: '300px',
+            }}>
+            {pairs.map((it, index) => (
+              <MenuItem key={`${it}-${index}`} value={it}>{it}</MenuItem>
+            ))}
+          </Select>
+        </>)}
       </Grid>
       <Grid item>
         <TableContainer>
@@ -65,6 +66,7 @@ function App() {
                 <TableCell>Token1 price</TableCell>
                 <TableCell>Reserve0</TableCell>
                 <TableCell>Reserve1</TableCell>
+                <TableCell>Pools</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -76,6 +78,7 @@ function App() {
                   <TableCell>{price.token1Price}</TableCell>
                   <TableCell>{price.reserve0}</TableCell>
                   <TableCell>{price.reserve1}</TableCell>
+                  <TableCell>{price.poolSize}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

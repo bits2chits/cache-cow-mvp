@@ -70,18 +70,15 @@ export class PriceAggregateProcessor {
     const prices = this.multiPoolPrices[pairSymbol];
     const token0ReservesSum = Decimal.sum(...Object.values(prices).map((it) => it.reserve0));
     const token1ReservesSum = Decimal.sum(...Object.values(prices).map((it) => it.reserve1));
-    const token0PriceSum = Decimal.sum(...Object.values(prices).map((it) => it.token0Price));
-    const token1PriceSum = Decimal.sum(...Object.values(prices).map((it) => it.token1Price));
-    const poolSize = new Decimal(Object.keys(prices).length);
-    Decimal.set({ precision: 4 });
-    const token0Result = token0PriceSum.div(poolSize).toSignificantDigits(5, Decimal.ROUND_HALF_UP);
-    const token1Result = token1PriceSum.div(poolSize).toSignificantDigits(5, Decimal.ROUND_HALF_UP);
+    const token0Result = token0ReservesSum.div(token1ReservesSum).toSignificantDigits(5, Decimal.ROUND_HALF_UP);
+    const token1Result = token1ReservesSum.div(token0ReservesSum).toSignificantDigits(5, Decimal.ROUND_HALF_UP);
     return {
       key: pairSymbol,
       token0Price: token0Result.toString(),
       token1Price: token1Result.toString(),
       reserve0: token0ReservesSum.toString(),
       reserve1: token1ReservesSum.toString(),
+      poolSize: Object.keys(prices).length
     };
   }
 

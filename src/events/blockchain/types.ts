@@ -27,6 +27,7 @@ export interface PairPrice {
 export interface Reserves {
   reserve0: Decimal | string;
   reserve1: Decimal | string;
+  poolSize?: number;
 }
 
 export interface Key {
