@@ -5,7 +5,7 @@ import { AbstractEvent } from '../../src/events/blockchain/abstract-event';
 
 class TestEvent extends AbstractEvent {
   constructor(log: LogDescription) {
-    super([], log);
+    super([], '', log);
   }
 
   toJSON(): object {

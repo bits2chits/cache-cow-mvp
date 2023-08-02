@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
-import { poll } from '../src/poller';
 import { Chain } from '../src/enums/rpcs';
-import { fetchBlockNumber } from '../src/continuous/utils';
+import { fetchBlockNumber } from '../src/old/continuous/utils';
+import { poll } from '../src/old/poller';
 
 jest.setTimeout(30000);
 

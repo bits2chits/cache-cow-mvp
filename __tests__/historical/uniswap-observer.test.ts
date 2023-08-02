@@ -1,8 +1,8 @@
 import { jest } from '@jest/globals';
-import { UniswapFactoryObserver } from '../../src/historical/uniswap-observer';
 import { AdminFactory, KafkaAdmin } from '../../src/kafka/admin';
 import { Chain } from '../../src/enums/rpcs';
 import { ethers, Filter, Log } from 'ethers';
+import { UniswapFactoryObserver } from '../../src/old/historical/uniswap-observer';
 
 describe('Tests Uniswap Observer', () => {
   const contractAddress = '0x123';

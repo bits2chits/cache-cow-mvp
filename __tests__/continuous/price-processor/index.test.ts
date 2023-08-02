@@ -1,13 +1,13 @@
-import PriceProcessor from '../../../src/continuous/price-processor';
 import BlockEvents from '../../../src/events/node/block-events';
-import { UniswapFactoryObserver } from '../../../src/historical/uniswap-observer';
 import { ProducerRecord } from 'kafkajs';
 import { KafkaProducer } from '../../../src/kafka/producer';
 import { sleep } from '../../../src/libs/sleep';
 import { Chain } from '../../../src/enums/rpcs';
 import { jest } from '@jest/globals';
-import { fetchBlockNumber, fetchPairAddress } from '../../../src/continuous/utils';
 import { MATIC_USDC } from '../../../src/enums/pairs';
+import PriceProcessor from '../../../src/old/continuous/price-processor';
+import { fetchBlockNumber, fetchPairAddress } from '../../../src/old/continuous/utils';
+import { UniswapFactoryObserver } from '../../../src/old/historical/uniswap-observer';
 
 jest.setTimeout(10000);
 
