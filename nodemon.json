@@ -1,5 +1,5 @@
 {
-  "watch": ["src/main.ts"],
+  "watch": ["src/main.ts", "src/server/**"],
   "ext": ".ts,.js",
   "ignore": [],
   "exec": "npx ts-node ./src/main.ts"

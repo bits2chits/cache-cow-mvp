@@ -20,8 +20,8 @@ function App() {
   const [prices, setPrices] = useState([]);
   const [token0s, setToken0s] = useState([]);
   const [token1s, setToken1s] = useState([]);
-  const [token0Filter, setToken0Filter] = useState('');
-  const [token1Filter, setToken1Filter] = useState('');
+  const [token0Filter, setToken0Filter] = useState('WMATIC');
+  const [token1Filter, setToken1Filter] = useState('USDC');
   const [expanded, setExpanded] = useState('');
 
   function calculatePrice(price, token) {
@@ -37,44 +37,52 @@ function App() {
       reconnectionDelayMax: 10000,
     });
     socket.connect();
+    const filters = []
+    if (token0Filter) {
+      filters.push(token0Filter)
+    }
+    if (token1Filter) {
+      filters.push(token1Filter)
+    }
+    socket.emit('filter', filters);
     socket.once('pairs', (pairs) => {
       setToken0s(Array.of(...new Set(pairs.map((it) => it.token0.symbol))));
       setToken1s(Array.of(...new Set(pairs.map((it) => it.token1.symbol))));
     });
     socket.on('prices', (prices) => {
-      setPrices(Object.entries(prices));
+      setPrices(prices);
     });
 
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [token0Filter, token1Filter]);
 
   return (
     <Grid container flexDirection='column' className='App'>
       <Grid item>
-        <InputLabel id="pair-select-label">Token0</InputLabel>
+        <InputLabel id='pair-select-label'>Token0</InputLabel>
         <Select
-          labelId="pair-select-label"
-          id="pair-select"
+          labelId='pair-select-label'
+          id='pair-select'
           value={token0Filter}
           onChange={(event) => setToken0Filter(event.target.value)}
           sx={{
-            minWidth: '300px'
+            minWidth: '300px',
           }}
         >
           {token0s.map((it, index) => (
             <MenuItem key={`token0-${it}-${index}`} value={it}>{it}</MenuItem>
           ))}
         </Select>
-        <InputLabel id="pair-select-label">Token1</InputLabel>
+        <InputLabel id='pair-select-label'>Token1</InputLabel>
         <Select
-          labelId="pair-select-label"
-          id="pair-select"
+          labelId='pair-select-label'
+          id='pair-select'
           value={token1Filter}
           onChange={(event) => setToken1Filter(event.target.value)}
           sx={{
-            minWidth: '300px'
+            minWidth: '300px',
           }}
         >
           {token1s.map((it, index) => (
@@ -98,17 +106,7 @@ function App() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {prices.filter(([pair]) => {
-                let containsToken0 = true
-                let containsToken1 = true
-                if (token0Filter) {
-                  containsToken0 = pair.startsWith(token0Filter)
-                }
-                if (token1Filter) {
-                  containsToken1 = pair.endsWith(token1Filter)
-                }
-                return containsToken0 && containsToken1
-              }).map(([pair, price], index) => (
+              {prices.map(([pair, price], index) => (
                 <TableRow key={pair}>
                   <TableCell colSpan={4}>
                     <Accordion expanded={expanded === pair} onChange={() => setExpanded(expanded === pair ? '' : pair)}>

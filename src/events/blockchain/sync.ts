@@ -3,8 +3,8 @@ import { AbstractEvent } from './abstract-event';
 import { LogDescription } from 'ethers';
 import { PairPrice } from '../../continuous/price-processor/types';
 import JSBI from 'jsbi';
-import { Erc20Metadata, PairMetadata } from '../../main';
 import { Decimal } from 'decimal.js';
+import { PairMetadata } from '../../server/pool-registry/types';
 
 export class Sync extends AbstractEvent {
   constructor(address: string, pair: PairMetadata, log: LogDescription) {
@@ -17,7 +17,7 @@ export class Sync extends AbstractEvent {
     return JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(decimals))
   }
 
-  toSignificant(amount: bigint, decimalsExp: JSBI) {
+  toSignificant(amount: bigint, decimalsExp: JSBI): Decimal {
     return new Decimal(amount.toString())
       .div(decimalsExp.toString())
       .toSignificantDigits(5, Decimal.ROUND_HALF_UP)
