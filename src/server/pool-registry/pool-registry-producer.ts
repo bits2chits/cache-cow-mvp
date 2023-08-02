@@ -66,10 +66,11 @@ export class PoolRegistryProducer {
     return [pair.token0.symbol, pair.token1.symbol]
       .sort((a, b) => a.localeCompare(b))
       .join('')
+      .replace(/[^\w\s]/gi, '');
   }
 
   async createTargetPriceTopic(pair: PairMetadata): Promise<void> {
-    await this.admin.createTopic(`price.${PoolRegistryProducer.normalizedPairString(pair)}`)
+    await this.admin.createTopic(`price.${PoolRegistryProducer.normalizedPairString(pair)}`);
   }
 
   async updateLpPoolRegistry(pair: PairMetadata): Promise<void> {
@@ -91,7 +92,7 @@ export class PoolRegistryProducer {
         const pair = await this.processPoolAddress(message);
         await Promise.all([
           this.createTargetPriceTopic(pair),
-          this.updateLpPoolRegistry(pair)
+          this.updateLpPoolRegistry(pair),
         ]);
       },
     });

@@ -27,11 +27,18 @@ export interface PairPrice {
 export interface Reserves {
   reserve0: Decimal | string;
   reserve1: Decimal | string;
+
+}
+
+export interface ReservesMetadata {
+  token0?: string;
+  token1?: string;
   poolSize?: number;
+  updated?: Date;
 }
 
 export interface Key {
   key: string;
 }
 
-export type CalculatedReserves = PairPrice & Reserves & Key
+export type CalculatedReserves = PairPrice & Reserves & ReservesMetadata & Key

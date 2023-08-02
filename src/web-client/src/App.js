@@ -3,6 +3,7 @@ import './App.css';
 import { useEffect, useState } from 'react';
 import {
   Grid, InputLabel, MenuItem, Select,
+  Button,
   Table,
   TableBody,
   TableCell,
@@ -53,6 +54,7 @@ function App() {
               <MenuItem key={`${it}-${index}`} value={it}>{it}</MenuItem>
             ))}
           </Select>
+          {pairFilter && <Button onClick={() => setPairFilter(undefined)}>Clear filters</Button>}
         </>)}
       </Grid>
       <Grid item>
@@ -62,11 +64,14 @@ function App() {
               <TableRow>
                 <TableCell>Index</TableCell>
                 <TableCell>Pair</TableCell>
+                <TableCell>Token0</TableCell>
+                <TableCell>Token1</TableCell>
                 <TableCell>Token0 price</TableCell>
                 <TableCell>Token1 price</TableCell>
                 <TableCell>Reserve0</TableCell>
                 <TableCell>Reserve1</TableCell>
                 <TableCell>Pools</TableCell>
+                <TableCell>Updated</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -74,11 +79,14 @@ function App() {
                 <TableRow key={`${pair}-${index}`}>
                   <TableCell>{index}</TableCell>
                   <TableCell>{pair}</TableCell>
+                  <TableCell>{price.token0}</TableCell>
+                  <TableCell>{price.token1}</TableCell>
                   <TableCell>{price.token0Price}</TableCell>
                   <TableCell>{price.token1Price}</TableCell>
                   <TableCell>{price.reserve0}</TableCell>
                   <TableCell>{price.reserve1}</TableCell>
                   <TableCell>{price.poolSize}</TableCell>
+                  <TableCell>{(new Date(price.updated)).toLocaleString()}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

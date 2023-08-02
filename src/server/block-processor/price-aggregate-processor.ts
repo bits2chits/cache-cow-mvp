@@ -66,7 +66,7 @@ export class PriceAggregateProcessor {
     }
   }
 
-  calculateAveragePrice(pairSymbol: string): CalculatedReserves {
+  calculateAveragePrice(pairSymbol: string, pair: PairMetadata): CalculatedReserves {
     const prices = this.multiPoolPrices[pairSymbol];
     const token0ReservesSum = Decimal.sum(...Object.values(prices).map((it) => it.reserve0));
     const token1ReservesSum = Decimal.sum(...Object.values(prices).map((it) => it.reserve1));
@@ -74,11 +74,14 @@ export class PriceAggregateProcessor {
     const token1Result = token1ReservesSum.div(token0ReservesSum).toSignificantDigits(5, Decimal.ROUND_HALF_UP);
     return {
       key: pairSymbol,
+      token0: pair.token0.symbol,
+      token1: pair.token1.symbol,
       token0Price: token0Result.toString(),
       token1Price: token1Result.toString(),
       reserve0: token0ReservesSum.toString(),
       reserve1: token1ReservesSum.toString(),
-      poolSize: Object.keys(prices).length
+      poolSize: Object.keys(prices).length,
+      updated: new Date()
     };
   }
 
@@ -100,7 +103,7 @@ export class PriceAggregateProcessor {
   async processPairReserves(reserves: CalculatedReserves, pair: PairMetadata): Promise<void> {
     const pairSymbol = PoolRegistryProducer.normalizedPairString(pair);
     this.updateMultipoolPriceState(pairSymbol, reserves, pair);
-    const calculatedAverage = this.calculateAveragePrice(pairSymbol);
+    const calculatedAverage = this.calculateAveragePrice(pairSymbol, pair);
     this.updatePriceState(calculatedAverage);
     console.log(`Updating average price for pair ${pairSymbol}. Token0: ${calculatedAverage.token0Price} - Token1: ${calculatedAverage.token1Price}`);
     await Promise.all([
