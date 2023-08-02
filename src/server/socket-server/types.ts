@@ -1,22 +1,12 @@
-import { PairMetadata } from '../pool-registry/types';
+import { CalculatedReserves } from '../../events/blockchain/types';
 
-export interface PricesMap {
-  [key: string]: {
-    [key: string]: TokenPrices
-  }
-}
-
-export type FrontendPriceEntries = [string, { [p: string]: TokenPrices }][]
+export type FrontendPriceEntries = [string, CalculatedReserves][]
 
 export interface SocketEvents {
   prices: (priceUpdates: FrontendPriceEntries) => void;
-  pairs: (pairs: PairMetadata[]) => void;
+  pairs: (pairs: string[]) => void;
   filter: (filters: string[]) => void;
   hello: () => void;
 }
 
-export interface TokenPrices {
-  pair: string;
-  token0Price: number;
-  token1Price: number;
-}
+

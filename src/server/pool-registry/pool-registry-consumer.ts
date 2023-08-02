@@ -71,4 +71,8 @@ export class PoolRegistryConsumer {
     this.listeners.set(id, callback);
   }
 
+  static formatPairName(pair: PairMetadata): string {
+    return `${pair.token0.symbol} → ${pair.token1.symbol}`
+  }
+
 }

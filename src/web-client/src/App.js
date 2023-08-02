@@ -2,9 +2,6 @@ import { io } from 'socket.io-client';
 import './App.css';
 import { useEffect, useState } from 'react';
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Grid, InputLabel, MenuItem, Select,
   Table,
   TableBody,
@@ -13,41 +10,22 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import { ExpandMore } from '@mui/icons-material';
-import Decimal from 'decimal.js';
 
 function App() {
   const [prices, setPrices] = useState([]);
-  const [token0s, setToken0s] = useState([]);
-  const [token1s, setToken1s] = useState([]);
-  const [token0Filter, setToken0Filter] = useState('WMATIC');
-  const [token1Filter, setToken1Filter] = useState('USDC');
-  const [expanded, setExpanded] = useState('');
-
-  function calculatePrice(price, token) {
-    const tokenSum = Decimal.sum(...Object.values(price).map((it) => new Decimal(it[`${token}Price`])));
-    const poolSize = new Decimal(Object.keys(price).length);
-    const result = tokenSum.div(poolSize)
-      .toSignificantDigits(5, Decimal.ROUND_HALF_UP);
-    return result.toString();
-  }
+  const [pairs, setPairs] = useState([]);
+  const [pairFilter, setPairFilter] = useState();
 
   useEffect(() => {
     const socket = io('ws://localhost:3000', {
       reconnectionDelayMax: 10000,
     });
     socket.connect();
-    const filters = []
-    if (token0Filter) {
-      filters.push(token0Filter)
+    if (pairFilter) {
+      socket.emit('filter', [pairFilter]);
     }
-    if (token1Filter) {
-      filters.push(token1Filter)
-    }
-    socket.emit('filter', filters);
     socket.once('pairs', (pairs) => {
-      setToken0s(Array.of(...new Set(pairs.map((it) => it.token0.symbol))));
-      setToken1s(Array.of(...new Set(pairs.map((it) => it.token1.symbol))));
+      setPairs(pairs);
     });
     socket.on('prices', (prices) => {
       setPrices(prices);
@@ -56,37 +34,23 @@ function App() {
     return () => {
       socket.disconnect();
     };
-  }, [token0Filter, token1Filter]);
+  }, [pairFilter]);
 
   return (
     <Grid container flexDirection='column' className='App'>
       <Grid item>
-        <InputLabel id='pair-select-label'>Token0</InputLabel>
+        <InputLabel id='pair-select-label'>Pairs</InputLabel>
         <Select
           labelId='pair-select-label'
           id='pair-select'
-          value={token0Filter}
-          onChange={(event) => setToken0Filter(event.target.value)}
+          value={pairFilter}
+          onChange={(event) => setPairFilter(event.target.value)}
           sx={{
             minWidth: '300px',
           }}
         >
-          {token0s.map((it, index) => (
+          {pairs.map((it, index) => (
             <MenuItem key={`token0-${it}-${index}`} value={it}>{it}</MenuItem>
-          ))}
-        </Select>
-        <InputLabel id='pair-select-label'>Token1</InputLabel>
-        <Select
-          labelId='pair-select-label'
-          id='pair-select'
-          value={token1Filter}
-          onChange={(event) => setToken1Filter(event.target.value)}
-          sx={{
-            minWidth: '300px',
-          }}
-        >
-          {token1s.map((it, index) => (
-            <MenuItem key={`token1-${it}-${index}`} value={it}>{it}</MenuItem>
           ))}
         </Select>
       </Grid>
@@ -95,55 +59,23 @@ function App() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell colSpan={4}>
-                  <Grid container flexDirection='row' justifyContent='space-between'>
-                    <Grid item>Index</Grid>
-                    <Grid item>Pair</Grid>
-                    <Grid item>Token0 price</Grid>
-                    <Grid item>Token1 price</Grid>
-                  </Grid>
-                </TableCell>
+                <TableCell>Index</TableCell>
+                <TableCell>Pair</TableCell>
+                <TableCell>Token0 price</TableCell>
+                <TableCell>Token1 price</TableCell>
+                <TableCell>Reserve0</TableCell>
+                <TableCell>Reserve1</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {prices.map(([pair, price], index) => (
-                <TableRow key={pair}>
-                  <TableCell colSpan={4}>
-                    <Accordion expanded={expanded === pair} onChange={() => setExpanded(expanded === pair ? '' : pair)}>
-                      <AccordionSummary
-                        expandIcon={<ExpandMore />}
-                      >
-                        <Grid container flexDirection='row' justifyContent='space-between'>
-                          <Grid item>{index}</Grid>
-                          <Grid item>{pair}</Grid>
-                          <Grid item>{calculatePrice(price, 'token0')}</Grid>
-                          <Grid item>{calculatePrice(price, 'token1')}</Grid>
-                        </Grid>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <TableContainer>
-                          <Table>
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>Pool address</TableCell>
-                                <TableCell>Pair</TableCell>
-                                <TableCell>Token0 price</TableCell>
-                                <TableCell>Token1 price</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {Object.entries(price).map(([address, pairs]) => (<TableRow>
-                                <TableCell>{address}</TableCell>
-                                <TableCell>{pairs.pair}</TableCell>
-                                <TableCell>{pairs.token0Price}</TableCell>
-                                <TableCell>{pairs.token1Price}</TableCell>
-                              </TableRow>))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      </AccordionDetails>
-                    </Accordion>
-                  </TableCell>
+                <TableRow key={`${pair}-${index}`}>
+                  <TableCell>{index}</TableCell>
+                  <TableCell>{pair}</TableCell>
+                  <TableCell>{price.token0Price}</TableCell>
+                  <TableCell>{price.token1Price}</TableCell>
+                  <TableCell>{price.reserve0}</TableCell>
+                  <TableCell>{price.reserve1}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

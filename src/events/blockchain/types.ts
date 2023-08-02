@@ -1,8 +1,10 @@
+import { Decimal } from 'decimal.js';
+
 export interface AbiInputsElement {
-  indexed?: boolean
-  internalType: string
-  name: string
-  type: string
+  indexed?: boolean;
+  internalType: string;
+  name: string;
+  type: string;
 }
 
 export interface AbiElement {
@@ -16,3 +18,19 @@ export interface AbiElement {
   constant?: boolean
   outputs?: AbiInputsElement[]
 }
+
+export interface PairPrice {
+  token0Price: Decimal | string;
+  token1Price: Decimal | string;
+}
+
+export interface Reserves {
+  reserve0: Decimal | string;
+  reserve1: Decimal | string;
+}
+
+export interface Key {
+  key: string;
+}
+
+export type CalculatedReserves = PairPrice & Reserves & Key

@@ -1,10 +1,10 @@
 import UniswapV2Abi from '../../abis/uniswap-v2.json';
 import { AbstractEvent } from './abstract-event';
 import { LogDescription } from 'ethers';
-import { PairPrice } from '../../continuous/price-processor/types';
 import JSBI from 'jsbi';
 import { Decimal } from 'decimal.js';
 import { PairMetadata } from '../../server/pool-registry/types';
+import { CalculatedReserves, PairPrice } from './types';
 
 export class Sync extends AbstractEvent {
   constructor(address: string, pair: PairMetadata, log: LogDescription) {
@@ -13,11 +13,11 @@ export class Sync extends AbstractEvent {
     this.set('key', `${log.topic}:${address}`);
   }
 
-  exponentialDecimals(decimals): JSBI {
+  static exponentialDecimals(decimals: string | number): JSBI {
     return JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(decimals))
   }
 
-  toSignificant(amount: bigint, decimalsExp: JSBI): Decimal {
+  static toSignificant(amount: string | bigint | Decimal, decimalsExp: JSBI): Decimal {
     return new Decimal(amount.toString())
       .div(decimalsExp.toString())
       .toSignificantDigits(5, Decimal.ROUND_HALF_UP)
@@ -26,8 +26,8 @@ export class Sync extends AbstractEvent {
   calcPrice(): PairPrice {
     const pair: PairMetadata = this.get('pair')
     if (pair) {
-      const scaledReserve0 = this.toSignificant(this.get('reserve0'), this.exponentialDecimals(pair.token0.decimals))
-      const scaledReserve1 = this.toSignificant(this.get('reserve1'), this.exponentialDecimals(pair.token1.decimals))
+      const scaledReserve0 = Sync.toSignificant(this.get('reserve0'), Sync.exponentialDecimals(pair.token0.decimals))
+      const scaledReserve1 = Sync.toSignificant(this.get('reserve1'), Sync.exponentialDecimals(pair.token1.decimals))
       return {
         token0Price: scaledReserve0.dividedBy(scaledReserve1).toString(),
         token1Price: scaledReserve1.dividedBy(scaledReserve0).toString(),
@@ -42,7 +42,7 @@ export class Sync extends AbstractEvent {
     }
   }
 
-  toJSON(): object {
+  toJSON(): CalculatedReserves {
     return {
       key: this.get('key'),
       reserve0: this.get('reserve0').toString(),

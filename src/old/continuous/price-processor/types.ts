@@ -12,7 +12,3 @@ export interface Pair {
   token1: string;
 }
 
-export interface PairPrice {
-  token0Price: string;
-  token1Price: string;
-}

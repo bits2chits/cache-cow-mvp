@@ -62,11 +62,14 @@ export class PoolRegistryProducer {
     };
   }
 
-  async createTargetPriceTopic(pair: PairMetadata): Promise<void> {
-    const normalizedPairString = [pair.token0.symbol, pair.token1.symbol]
+  static normalizedPairString(pair: PairMetadata): string {
+    return [pair.token0.symbol, pair.token1.symbol]
       .sort((a, b) => a.localeCompare(b))
       .join('')
-    await this.admin.createTopic(`price.${normalizedPairString}`)
+  }
+
+  async createTargetPriceTopic(pair: PairMetadata): Promise<void> {
+    await this.admin.createTopic(`price.${PoolRegistryProducer.normalizedPairString(pair)}`)
   }
 
   async updateLpPoolRegistry(pair: PairMetadata): Promise<void> {

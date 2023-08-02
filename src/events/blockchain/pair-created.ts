@@ -6,7 +6,7 @@ import {LogDescription} from "ethers"
 export class PairCreated extends AbstractEvent {
 
   constructor(log: LogDescription) {
-    super(UniswapFactoryAbi, log)
+    super(UniswapFactoryAbi, '', log)
     this.set("key", `${this.get("token0")}:${this.get("token1")}:${this.get("pair")}:${this.get("3")}`)
   }
 
