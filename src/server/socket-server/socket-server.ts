@@ -36,7 +36,7 @@ export async function socketServer(
   const httpServer = http.createServer(server);
   const io = new Server<SocketEvents>(httpServer, {
     cors: {
-      origin: ['http://mvp.cachecow.io'],
+      origin: ['https://mvp.cachecow.io'],
       methods: ['GET', 'POST', 'OPTIONS'],
       preflightContinue: true,
     },
