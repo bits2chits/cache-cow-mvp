@@ -5,13 +5,11 @@ import { PricesMap } from '../block-processor/types';
 import { PriceAggregateProcessor } from '../block-processor/price-aggregate-processor';
 import express, { Server as ExpressServer } from 'express';
 import * as http from 'http';
-import cors from 'cors';
 
 
 const server = express();
 const port = process.env.PORT || 3000;
 
-server.use(cors());
 server.get('/api/health-check', (req, res) => {
   res.status(200).send('OK');
 });
@@ -38,10 +36,21 @@ export async function socketServer(
   const httpServer = http.createServer(server);
   const io = new Server<SocketEvents>(httpServer, {
     cors: {
-      origin: ['*'],
+      origin: ['mvp.cachecow.io'],
       methods: ['GET', 'POST', 'OPTIONS'],
       preflightContinue: true,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      handlePreflightRequest: (req, res) => {
+        res.writeHead(200, {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+          "Access-Control-Allow-Credentials": true
+        })
+        res.end()
+      }
     },
+    httpCompression: true
   });
 
   priceAggregateProcessor.registerListener(uuid(), (prices: PricesMap) => {
