@@ -3,6 +3,15 @@ import { Server, Socket } from 'socket.io';
 import { FrontendPriceEntries, SocketEvents } from './types';
 import { PricesMap } from '../block-processor/types';
 import { PriceAggregateProcessor } from '../block-processor/price-aggregate-processor';
+import express, { Server as ExpressServer } from 'express';
+import * as http from 'http';
+
+
+const server = express();
+const port = process.env.PORT || 3000;
+server.get('/api/health-check', (req, res) => {
+  res.status(200).send('OK');
+});
 
 let priceState: PricesMap = {};
 let sortedPairs: string[] = [];
@@ -22,12 +31,13 @@ function filterPrices(filters: string[]): FrontendPriceEntries {
 
 export async function socketServer(
   priceAggregateProcessor: PriceAggregateProcessor,
-): Promise<Server> {
-  const io = new Server<SocketEvents>({
+): Promise<ExpressServer> {
+  const httpServer = http.createServer(server);
+  const io = new Server<SocketEvents>(httpServer, {
     cors: {
-      origin: '*',
-      methods: ['GET', 'POST'],
-    },
+      origin: ['*'],
+      methods: ['GET', 'POST', 'OPTIONS'],
+    }
   });
 
   priceAggregateProcessor.registerListener(uuid(), (prices: PricesMap) => {
@@ -54,5 +64,5 @@ export async function socketServer(
     sockets.delete(socket.id);
   });
 
-  return io.listen(3000);
+  return httpServer.listen(port);
 }
