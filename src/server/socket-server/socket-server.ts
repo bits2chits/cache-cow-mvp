@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import { v4 as uuid } from 'uuid';
 import { Server, Socket } from 'socket.io';
 import { FrontendPriceEntries, SocketEvents } from './types';
@@ -11,6 +9,17 @@ import * as http from 'http';
 
 const server = express();
 const port = process.env.PORT || 3000;
+
+server.use((req, res, next) => {
+  res.writeHead(200, {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Credentials': true,
+  });
+  res.end();
+  next();
+});
+
 
 server.get('/api/health-check', (req, res) => {
   res.status(200).send('OK');
@@ -37,18 +46,12 @@ export async function socketServer(
 ): Promise<ExpressServer> {
   const httpServer = http.createServer(server);
   const io = new Server<SocketEvents>(httpServer, {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    origins: ["*"],
-    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-    handlePreflightRequest: (req, res) => {
-      res.writeHead(200, {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-        "Access-Control-Allow-Credentials": true
-      })
-      res.end()
-    }
+    cors: {
+      origin: ['mvp.cachecow.io'],
+      methods: ['GET', 'POST', 'OPTIONS'],
+      preflightContinue: true,
+    },
+    httpCompression: true,
   });
 
   priceAggregateProcessor.registerListener(uuid(), (prices: PricesMap) => {
@@ -64,16 +67,9 @@ export async function socketServer(
     socket.data.filters = [];
     socket.on('filter', (filters: string[]) => {
       socket.data.filters = filters;
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       socket.emit('prices', filterPrices(filters));
     });
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     socket.emit('pairs', sortedPairs);
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     socket.emit('prices', filterPrices(socket.data.filters));
     sockets.set(socket.id, socket);
   });
