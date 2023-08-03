@@ -1,7 +1,8 @@
 import {JsonRpcProvider} from "ethers"
 
 enum ChainRpcUrls {
-  Polygon = "https://polygon-mainnet-archive.allthatnode.com:8545/bHsmKCKL5OfLrxcdoAaEaA7ZGbzfsbXA"// "https://polygon-rpc.com/"
+  Polygon = "https://polygon-mainnet-archive.allthatnode.com:8545/5WpBhQPKQL2C5N0psmIJcviQuOdN5owb" // "https://polygon-mainnet-archive.allthatnode.com:8545/bHsmKCKL5OfLrxcdoAaEaA7ZGbzfsbXA"// "https://polygon-rpc.com/"
+
 }
 export enum Chain {
   Polygon = "Polygon"
