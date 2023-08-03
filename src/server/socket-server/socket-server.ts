@@ -40,7 +40,8 @@ export async function socketServer(
     cors: {
       origin: ['*'],
       methods: ['GET', 'POST', 'OPTIONS'],
-    }
+      preflightContinue: true,
+    },
   });
 
   priceAggregateProcessor.registerListener(uuid(), (prices: PricesMap) => {
