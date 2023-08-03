@@ -12,9 +12,9 @@ async function main(): Promise<void> {
   provider.pollingInterval = 2000;
 
   const registryProducer = new PoolRegistryProducer(provider);
-  const registry = new PoolRegistryConsumer(provider);
+  const registry = new PoolRegistryConsumer();
   const syncEventProcessor = new SyncEventProcessor(provider, registry);
-  const priceAggregateProcessor = new PriceAggregateProcessor(provider, registry);
+  const priceAggregateProcessor = new PriceAggregateProcessor(registry);
 
   await Promise.all([
     registryProducer.run(),

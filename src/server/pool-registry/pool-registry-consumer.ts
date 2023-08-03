@@ -16,10 +16,6 @@ export class PoolRegistryConsumer {
   pairs = new Map<string, PairMetadata>();
   listeners = new Map<string, (pairs: PairMetadata[]) => void>();
 
-  constructor(provider: ContractRunner) {
-    this.provider = provider;
-  }
-
   async initialize(): Promise<void> {
     this.admin = await AdminFactory.getAdmin();
     const topics: string[] = (await this.admin.listTopics());

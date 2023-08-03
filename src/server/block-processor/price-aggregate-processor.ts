@@ -1,8 +1,6 @@
-import { ethers, EventFilter, Interface, JsonRpcProvider } from 'ethers';
 import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
 import { AdminFactory, KafkaAdmin } from '../../kafka/admin';
 import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
-import UniswapV2Abi from '../../abis/uniswap-v2.json';
 import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { v4 as uuid } from 'uuid';
 import { CalculatedReserves } from '../../events/blockchain/types';
@@ -13,10 +11,7 @@ import { Decimal } from 'decimal.js';
 import { PoolRegistryProducer } from '../pool-registry/pool-registry-producer';
 
 export class PriceAggregateProcessor {
-  provider: JsonRpcProvider;
   registry: PoolRegistryConsumer;
-  uniswapV2Interface: Interface;
-  filter: EventFilter;
   admin: KafkaAdmin;
   producer: KafkaProducer;
   consumer: KafkaConsumer;
@@ -25,10 +20,8 @@ export class PriceAggregateProcessor {
   prices: PricesMap = {};
   listeners = new Map<string, (pairs: PricesMap) => void>();
 
-  constructor(provider: JsonRpcProvider, registry: PoolRegistryConsumer) {
-    this.provider = provider;
+  constructor(registry: PoolRegistryConsumer) {
     this.registry = registry;
-    this.uniswapV2Interface = new ethers.Interface(UniswapV2Abi);
   }
 
   async initialize(): Promise<void> {
@@ -95,7 +88,6 @@ export class PriceAggregateProcessor {
 
   async broadcastPriceUpdates(): Promise<void> {
     if (this.listeners.size > 0) {
-      console.log(`Broadcasting price updates to ${this.listeners.size} listeners`)
       this.listeners.forEach((callback) => callback(this.prices));
     }
   }
