@@ -16,7 +16,7 @@ function App() {
   const [prices, setPrices] = useState([]);
   const [pairs, setPairs] = useState([]);
   const [pairFilter, setPairFilter] = useState();
- // meaningless comment
+
   useEffect(() => {
     const socket = io('https://api.cachecow.io/', {
       reconnectionDelayMax: 10000,
