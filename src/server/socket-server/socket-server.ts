@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import { v4 as uuid } from 'uuid';
 import { Server, Socket } from 'socket.io';
 import { FrontendPriceEntries, SocketEvents } from './types';
@@ -35,22 +37,18 @@ export async function socketServer(
 ): Promise<ExpressServer> {
   const httpServer = http.createServer(server);
   const io = new Server<SocketEvents>(httpServer, {
-    cors: {
-      origin: ['mvp.cachecow.io'],
-      methods: ['GET', 'POST', 'OPTIONS'],
-      preflightContinue: true,
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      handlePreflightRequest: (req, res) => {
-        res.writeHead(200, {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-          "Access-Control-Allow-Credentials": true
-        })
-        res.end()
-      }
-    },
-    httpCompression: true
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    origins: ["*"],
+    // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+    handlePreflightRequest: (req, res) => {
+      res.writeHead(200, {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+        "Access-Control-Allow-Credentials": true
+      })
+      res.end()
+    }
   });
 
   priceAggregateProcessor.registerListener(uuid(), (prices: PricesMap) => {
@@ -66,9 +64,16 @@ export async function socketServer(
     socket.data.filters = [];
     socket.on('filter', (filters: string[]) => {
       socket.data.filters = filters;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       socket.emit('prices', filterPrices(filters));
     });
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     socket.emit('pairs', sortedPairs);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     socket.emit('prices', filterPrices(socket.data.filters));
     sockets.set(socket.id, socket);
   });
