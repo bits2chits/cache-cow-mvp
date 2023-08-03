@@ -10,17 +10,6 @@ import * as http from 'http';
 const server = express();
 const port = process.env.PORT || 3000;
 
-server.use((req, res, next) => {
-  res.writeHead(200, {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Credentials': true,
-  });
-  res.end();
-  next();
-});
-
-
 server.get('/api/health-check', (req, res) => {
   res.status(200).send('OK');
 });
