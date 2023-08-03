@@ -18,7 +18,7 @@ function App() {
   const [pairFilter, setPairFilter] = useState();
 
   useEffect(() => {
-    const socket = io('ws://localhost:3000', {
+    const socket = io('ws://api.cachecow.io', {
       reconnectionDelayMax: 10000,
     });
     socket.connect();
