@@ -9,7 +9,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
+  TableRow, Box,
 } from '@mui/material';
 
 function App() {
@@ -40,6 +40,15 @@ function App() {
 
   return (
     <Grid container flexDirection='column' className='App'>
+      <Box
+        component="img"
+        sx={{
+          height: 70,
+          width: 186
+        }}
+        alt="Cache Cow Banner"
+        src="/cc_logo.png"
+      />
       <Grid item>
         {pairs.length > 0 && (<>
           <InputLabel id='pair-select-label'>Pairs</InputLabel>
