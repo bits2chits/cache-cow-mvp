@@ -5,10 +5,13 @@ import { PricesMap } from '../block-processor/types';
 import { PriceAggregateProcessor } from '../block-processor/price-aggregate-processor';
 import express, { Server as ExpressServer } from 'express';
 import * as http from 'http';
+import cors from 'cors';
 
 
 const server = express();
 const port = process.env.PORT || 3000;
+
+server.use(cors());
 server.get('/api/health-check', (req, res) => {
   res.status(200).send('OK');
 });
