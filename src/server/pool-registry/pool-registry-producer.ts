@@ -66,7 +66,7 @@ export class PoolRegistryProducer {
     return [pair.token0.symbol, pair.token1.symbol]
       .sort((a, b) => a.localeCompare(b))
       .join('')
-      .replace(/[^\w\s]/gi, '');
+      .replace(/\W/gi, '');
   }
 
   async createTargetPriceTopic(pair: PairMetadata): Promise<void> {
