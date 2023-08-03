@@ -9,7 +9,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow, Box,
+  TableRow,
 } from '@mui/material';
 
 function App() {
