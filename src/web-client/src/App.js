@@ -20,6 +20,7 @@ function App() {
   useEffect(() => {
     const socket = io('https://api.cachecow.io', {
       reconnectionDelayMax: 10000,
+      secure: true
     });
     socket.connect();
     if (pairFilter) {
