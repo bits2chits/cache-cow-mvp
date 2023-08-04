@@ -9,6 +9,7 @@ import { Sync } from '../../events/blockchain/sync';
 import { PairMetadata } from '../pool-registry/types';
 import { Decimal } from 'decimal.js';
 import { PoolRegistryProducer } from '../pool-registry/pool-registry-producer';
+import { CompressionTypes } from 'kafkajs';
 
 export class PriceAggregateProcessor {
   registry: PoolRegistryConsumer;
@@ -101,6 +102,7 @@ export class PriceAggregateProcessor {
     await Promise.all([
       this.producer.send({
         topic: `prices.${pairSymbol}`,
+        compression: CompressionTypes.Snappy,
         messages: [{
           key: calculatedAverage.key,
           value: JSON.stringify(calculatedAverage),
@@ -116,15 +118,17 @@ export class PriceAggregateProcessor {
       await this.initialize();
     }
     return this.consumer.run({
-      eachMessage: async ({ message }) => {
-        const reserves: CalculatedReserves = JSON.parse(message.value.toString());
-        const address = reserves.key.split(':')[1];
-        const pair = this.registry.getPairMetadata(address);
-        if (!pair || reserves.token0Price === '0' || reserves.token1Price === '0') {
-          return;
-        }
-        await this.processPairReserves(reserves, pair);
-      },
+      eachBatch: async ({batch}) => {
+        await Promise.all(batch.messages.map((message) => {
+          const reserves: CalculatedReserves = JSON.parse(message.value.toString());
+          const address = reserves.key.split(':')[1];
+          const pair = this.registry.getPairMetadata(address);
+          if (!pair || reserves.token0Price === '0' || reserves.token1Price === '0') {
+            return Promise.resolve();
+          }
+          return this.processPairReserves(reserves, pair);
+        }))
+      }
     });
   }
 }

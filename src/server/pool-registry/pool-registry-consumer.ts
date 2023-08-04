@@ -1,6 +1,5 @@
 import { ContractRunner } from 'ethers';
 import { AdminFactory, KafkaAdmin } from '../../kafka/admin';
-import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
 import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { v4 as uuid } from 'uuid';
@@ -10,7 +9,6 @@ export class PoolRegistryConsumer {
   provider: ContractRunner;
   admin: KafkaAdmin;
   existingPoolAddresses: Set<string>;
-  producer: KafkaProducer;
   consumer: KafkaConsumer;
   initialized = false;
   pairs = new Map<string, PairMetadata>();
@@ -24,7 +22,6 @@ export class PoolRegistryConsumer {
       console.log(`Creating system event topic: ${SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY}`);
       await this.admin.createTopic(SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY);
     }
-    this.producer = await ProducerFactory.getProducer();
     this.consumer = await ConsumerFactory.getConsumer({
       topics: [SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY],
       fromBeginning: true,

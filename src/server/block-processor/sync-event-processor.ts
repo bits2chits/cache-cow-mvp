@@ -4,7 +4,7 @@ import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
 import UniswapV2Abi from '../../abis/uniswap-v2.json';
 import { Sync } from '../../events/blockchain/sync';
 import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
-import { ProducerRecord } from 'kafkajs';
+import { CompressionTypes, ProducerRecord } from 'kafkajs';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { sleep } from '../../libs/sleep';
 
@@ -60,27 +60,32 @@ export class SyncEventProcessor {
   }
 
   async processMessages(): Promise<void> {
+    const batch = [];
     for (let i = 0; i < this.messageOutbox.length; i++) {
       if (this.registry.has(this.messageOutbox[i].topic)) {
-        console.info(`Processing message ${i + 1}`);
-        const message = this.messageOutbox.shift();
-        try {
-          await this.producer.send(message);
-        } catch (e) {
-          console.error('Could not process message', e);
-          this.messageOutbox.push(message);
-        }
+        batch.push(this.messageOutbox.shift());
       } else {
         console.info(`Skipping message ${i + 1}. Awaiting creation of topic: ${this.messageOutbox[i].topic}`);
       }
     }
+    try {
+      await this.producer.sendBatch({
+        topicMessages: batch,
+        compression: CompressionTypes.Snappy,
+      });
+    } catch (e) {
+      console.error('Could not process batch', e);
+      this.messageOutbox.push(...batch);
+    }
   }
 
   async processPoolAdded(): Promise<void> {
+    const batch = [];
+    const addresses = [];
     for (const [address, log] of this.poolAddedOutbox) {
+      addresses.push(address);
       if (!this.registry.has(address)) {
-        await this.admin.createTopic(address);
-        await this.producer.send({
+        batch.push({
           topic: SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED,
           messages: [{
             key: log.address,
@@ -90,12 +95,21 @@ export class SyncEventProcessor {
                 : value,
             ),
           }],
-        }).finally(() => {
-          this.poolAddedOutbox.delete(address);
-          console.info(`Added topic ${log.address} to kafka`);
         });
       }
     }
+    await Promise.all([
+      this.admin.createTopics(addresses),
+      await this.producer.sendBatch({
+        topicMessages: batch,
+        compression: CompressionTypes.Snappy,
+      }),
+    ]).finally(() => {
+      addresses.forEach((address) =>  {
+        this.poolAddedOutbox.delete(address)
+        console.info(`Added topic ${address} to kafka`);
+      });
+    });
   }
 
   async processOutbox(): Promise<void> {
@@ -106,7 +120,7 @@ export class SyncEventProcessor {
     clearInterval(this.messageOutboxInterval);
     await Promise.all([
       await this.processPoolAdded(),
-      await this.processMessages()
+      await this.processMessages(),
     ]);
   }
 
@@ -116,7 +130,7 @@ export class SyncEventProcessor {
     }
     return Promise.all([
       this.provider.on(this.filter, (log) => this.processLog(log)),
-      this.processOutbox()
+      this.processOutbox(),
     ]);
   }
 

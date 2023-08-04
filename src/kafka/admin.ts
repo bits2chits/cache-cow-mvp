@@ -2,6 +2,20 @@ import { Admin } from 'kafkajs';
 import { KafkaService, KafkaServiceInstance } from './index';
 import { ethers } from 'ethers';
 
+const defaultTopicConfiguration = {
+  numPartitions: 1,
+  configEntries: [
+    {
+      name: 'cleanup.policy',
+      value: 'compact',
+    },
+    {
+      name: 'retention.ms',
+      value: '-1',
+    },
+  ],
+};
+
 export class KafkaAdmin {
   kafkaService: KafkaService;
   admin: Admin;
@@ -34,20 +48,24 @@ export class KafkaAdmin {
         waitForLeaders: true,
         topics: [{
           topic,
-          numPartitions: 1,
-          configEntries: [
-            {
-              name: 'cleanup.policy',
-              value: 'compact',
-            },
-            {
-              name: 'retention.ms',
-              value: '-1',
-            },
-          ],
+          ...defaultTopicConfiguration,
         }],
       });
     }
+  }
+
+  async createTopics(topics: string[]): Promise<void> {
+    const admin = await this.getInstance();
+    const existingTopics = await admin.listTopics();
+    const topicsToCreate = topics.filter((topic) => !existingTopics.includes(topic))
+      .map((topic) => ({
+        topic,
+        ...defaultTopicConfiguration,
+      }));
+    await admin.createTopics({
+      waitForLeaders: true,
+      topics: topicsToCreate,
+    });
   }
 
   async deleteTopic(topic: string): Promise<void> {
