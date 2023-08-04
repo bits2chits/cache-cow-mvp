@@ -1,16 +1,17 @@
-import { sleep } from "../libs/sleep"
 import { ProcessorInterface } from "./types"
+import { sleep } from "../libs/sleep"
 
 export default abstract class BaseProcessor implements ProcessorInterface {
   protected running: boolean
 
-  constructor() {
-    this.initialize()
-      .catch(console.error)
+  protected constructor() {
+    // We shouldn't call an async process here, it'll result in inconsistencies
+    // with super vs this being created. We can perhaps make use of a static constructor?
   }
 
-  async initialize(): Promise<void> {
-    // @TODO some initialization stuff
+  abstract initialize(): Promise<void>
+
+  protected async start(): Promise<void> {
     this.running = true
     while (this.running) {
       await sleep(1000)
