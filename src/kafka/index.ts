@@ -22,8 +22,8 @@ export enum SYSTEM_EVENT_TOPICS {
 
 // https://github.com/tulios/kafkajs/tree/master#-usage
 const defaultKafkaConfig = {
-  clientId: 'my-app',
-  brokers: ['localhost:9092', '192.168.50.61:9092'] // from docker-compose
+  clientId: 'cache-cow',
+  brokers: ['localhost:9092'] // from docker-compose
 }
 
 const defaultProducerConfig: ProducerConfig = {
