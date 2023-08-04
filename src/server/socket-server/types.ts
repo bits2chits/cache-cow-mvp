@@ -7,7 +7,7 @@ export type FrontendPoolDeltas = [string, PoolDeltas][]
 export interface SocketEvents {
   prices: (priceUpdates: FrontendPriceEntries) => void;
   deltas: (poolDeltas: FrontendPoolDeltas) => void;
-  pairs: (pairs: string[]) => void;
+  pairs: (pairs: Set<string>) => void;
   filter: (filters: string[]) => void;
   hello: () => void;
 }
