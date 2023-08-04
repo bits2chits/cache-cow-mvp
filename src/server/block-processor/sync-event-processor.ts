@@ -71,7 +71,7 @@ export class SyncEventProcessor {
     try {
       await this.producer.sendBatch({
         topicMessages: batch,
-        compression: CompressionTypes.Snappy,
+        compression: CompressionTypes.GZIP,
       });
     } catch (e) {
       console.error('Could not process batch', e);
@@ -102,7 +102,7 @@ export class SyncEventProcessor {
       this.admin.createTopics(addresses),
       this.producer.sendBatch({
         topicMessages: batch,
-        compression: CompressionTypes.Snappy,
+        compression: CompressionTypes.GZIP,
       }),
     ]).finally(() => {
       addresses.forEach((address) =>  {
