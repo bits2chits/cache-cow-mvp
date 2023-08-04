@@ -100,7 +100,7 @@ export class SyncEventProcessor {
     }
     await Promise.all([
       this.admin.createTopics(addresses),
-      this.producer.sendBatch({
+      await this.producer.sendBatch({
         topicMessages: batch,
         compression: CompressionTypes.Snappy,
       }),

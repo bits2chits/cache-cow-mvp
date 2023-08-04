@@ -9,6 +9,7 @@ import { Sync } from '../../events/blockchain/sync';
 import { PairMetadata } from '../pool-registry/types';
 import { Decimal } from 'decimal.js';
 import { PoolRegistryProducer } from '../pool-registry/pool-registry-producer';
+import { CompressionTypes } from 'kafkajs';
 
 export class PriceAggregateProcessor {
   registry: PoolRegistryConsumer;
@@ -101,6 +102,7 @@ export class PriceAggregateProcessor {
     await Promise.all([
       this.producer.send({
         topic: `prices.${pairSymbol}`,
+        compression: CompressionTypes.Snappy,
         messages: [{
           key: calculatedAverage.key,
           value: JSON.stringify(calculatedAverage),
