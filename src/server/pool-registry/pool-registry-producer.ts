@@ -3,7 +3,7 @@ import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { v4 as uuid } from 'uuid';
-import { CompressionTypes, KafkaMessage } from 'kafkajs';
+import { KafkaMessage } from 'kafkajs';
 import UniswapV2Abi from '../../abis/uniswap-v2.json';
 import Erc20Abi from '../../abis/erc20.json';
 import { Erc20Metadata, PairMetadata } from './types';
@@ -76,7 +76,6 @@ export class PoolRegistryProducer {
   async updateLpPoolRegistry(pair: PairMetadata): Promise<void> {
     await this.producer.send({
       topic: SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY,
-      compression: CompressionTypes.Snappy,
       messages: [{
         key: `${pair.pair}:${pair.token0.symbol}:${pair.token1.symbol}`,
         value: JSON.stringify(pair),
