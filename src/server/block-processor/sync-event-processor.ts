@@ -4,7 +4,7 @@ import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
 import UniswapV2Abi from '../../abis/uniswap-v2.json';
 import { Sync } from '../../events/blockchain/sync';
 import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
-import { CompressionTypes, ProducerRecord } from 'kafkajs';
+import { CompressionTypes, ProducerRecord, RecordMetadata } from 'kafkajs';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { sleep } from '../../libs/sleep';
 
@@ -37,8 +37,8 @@ export class SyncEventProcessor {
   async initialize(): Promise<void> {
     this.admin = await AdminFactory.getAdmin();
     this.producer = await ProducerFactory.getProducer();
-    this.poolAddedOutboxInterval = setInterval(() => this.processPoolAdded(), 1000);
-    this.messageOutboxInterval = setInterval(() => this.processMessages(), 100);
+    this.poolAddedOutboxInterval = setInterval(async () => await this.processPoolAdded(), 1000);
+    this.messageOutboxInterval = setInterval(async () => await this.processMessages(), 100);
     this.initialized = true;
   }
 
@@ -79,7 +79,7 @@ export class SyncEventProcessor {
     }
   }
 
-  async processPoolAdded(): Promise<void> {
+  async processPoolAdded(): Promise<[void, RecordMetadata[]]> {
     const batch = [];
     const addresses = [];
     for (const [address, log] of this.poolAddedOutbox) {
@@ -98,7 +98,7 @@ export class SyncEventProcessor {
         });
       }
     }
-    await Promise.all([
+    return Promise.all([
       this.admin.createTopics(addresses),
       this.producer.sendBatch({
         topicMessages: batch,
@@ -119,8 +119,8 @@ export class SyncEventProcessor {
     clearInterval(this.poolAddedOutboxInterval);
     clearInterval(this.messageOutboxInterval);
     await Promise.all([
-      await this.processPoolAdded(),
-      await this.processMessages(),
+      this.processPoolAdded(),
+      this.processMessages(),
     ]);
   }
 
