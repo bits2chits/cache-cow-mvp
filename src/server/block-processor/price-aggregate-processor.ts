@@ -116,15 +116,17 @@ export class PriceAggregateProcessor {
       await this.initialize();
     }
     return this.consumer.run({
-      eachMessage: async ({ message }) => {
-        const reserves: CalculatedReserves = JSON.parse(message.value.toString());
-        const address = reserves.key.split(':')[1];
-        const pair = this.registry.getPairMetadata(address);
-        if (!pair || reserves.token0Price === '0' || reserves.token1Price === '0') {
-          return;
-        }
-        await this.processPairReserves(reserves, pair);
-      },
+      eachBatch: async ({batch}) => {
+        await Promise.all(batch.messages.map((message) => {
+          const reserves: CalculatedReserves = JSON.parse(message.value.toString());
+          const address = reserves.key.split(':')[1];
+          const pair = this.registry.getPairMetadata(address);
+          if (!pair || reserves.token0Price === '0' || reserves.token1Price === '0') {
+            return Promise.resolve();
+          }
+          return this.processPairReserves(reserves, pair);
+        }))
+      }
     });
   }
 }

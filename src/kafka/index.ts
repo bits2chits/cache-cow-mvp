@@ -7,8 +7,13 @@ import {
   ConsumerConfig,
   Partitioners,
   Producer,
-  ProducerConfig
+  ProducerConfig,
+  CompressionTypes,
+  CompressionCodecs
 } from 'kafkajs'
+import SnappyCodec from 'kafkajs-snappy'
+
+CompressionCodecs[CompressionTypes.Snappy] = SnappyCodec
 
 export enum SYSTEM_EVENT_TOPICS {
   UNISWAP_LP_POOL_ADDED = "config.events.uniswap-lp-pool-added",
