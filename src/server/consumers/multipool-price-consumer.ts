@@ -75,11 +75,10 @@ export class MultipoolPriceConsumer {
         maximum0 = pools[i];
       }
     }
-    const hundred = new Decimal(100);
-    const delta0 = hundred
-      .minus((maximum0[1].token0Price as Decimal)
-        .div(minimum0[1].token0Price)
-        .mul(hundred))
+    const delta0 = (maximum0[1].token0Price as Decimal)
+      .div(minimum0[1].token0Price)
+      .mul(new Decimal(100))
+      .minus(new Decimal(100))
       .toSignificantDigits(5, Decimal.ROUND_DOWN);
 
     let minimum1 = pools[0];
@@ -94,10 +93,10 @@ export class MultipoolPriceConsumer {
       }
     }
 
-    const delta1 = hundred
-      .minus((maximum0[1].token0Price as Decimal)
-        .div(minimum0[1].token0Price)
-        .mul(hundred))
+    const delta1 = (maximum1[1].token1Price as Decimal)
+      .div(minimum1[1].token1Price)
+      .mul(new Decimal(100))
+      .minus(new Decimal(100))
       .toSignificantDigits(5, Decimal.ROUND_DOWN);
 
 
