@@ -9,6 +9,8 @@ import { Sync } from '../../events/blockchain/sync';
 import { PairMetadata } from '../pool-registry/types';
 import { Decimal } from 'decimal.js';
 import { PoolRegistryProducer } from '../pool-registry/pool-registry-producer';
+import { AbstractEvent } from '../../events/blockchain/abstract-event';
+
 
 export class PriceAggregateProcessor {
   registry: PoolRegistryConsumer;
@@ -17,7 +19,6 @@ export class PriceAggregateProcessor {
   consumer: KafkaConsumer;
   initialized = false;
   multiPoolPrices: MultiPoolPricesMap = {};
-  prices: PricesMap = {};
   listeners = new Map<string, (pairs: PricesMap) => void>();
 
   constructor(registry: PoolRegistryConsumer) {
@@ -36,50 +37,45 @@ export class PriceAggregateProcessor {
     this.initialized = true;
   }
 
-  updateMultipoolPriceState(pairSymbol: string, reserves: CalculatedReserves, pair: PairMetadata): void {
-    const token0Decimals = Sync.exponentialDecimals(pair.token0.decimals);
-    const token1Decimals = Sync.exponentialDecimals(pair.token1.decimals);
-    if (this.multiPoolPrices[pairSymbol]) {
-      this.multiPoolPrices[pairSymbol][pair.pair] = {
-        key: pairSymbol,
-        token0Price: Sync.toSignificant(reserves.token0Price, token0Decimals),
-        reserve0: Sync.toSignificant(reserves.reserve0, token0Decimals),
-        token1Price: Sync.toSignificant(reserves.token1Price, token1Decimals),
-        reserve1: Sync.toSignificant(reserves.reserve1, token1Decimals),
-      };
-    } else {
-      this.multiPoolPrices[pairSymbol] = {};
-      this.multiPoolPrices[pairSymbol][pair.pair] = {
-        key: pairSymbol,
-        token0Price: Sync.toSignificant(reserves.token0Price, token0Decimals),
-        reserve0: Sync.toSignificant(reserves.reserve0, token0Decimals),
-        token1Price: Sync.toSignificant(reserves.token1Price, token1Decimals),
-        reserve1: Sync.toSignificant(reserves.reserve1, token1Decimals),
-      };
-    }
-  }
-
-  calculateAveragePrice(pairSymbol: string, pair: PairMetadata): CalculatedReserves {
-    const prices = this.multiPoolPrices[pairSymbol];
-    const token0ReservesSum = Decimal.sum(...Object.values(prices).map((it) => it.reserve0));
-    const token1ReservesSum = Decimal.sum(...Object.values(prices).map((it) => it.reserve1));
-    const token0Result = token0ReservesSum.div(token1ReservesSum).toSignificantDigits(5, Decimal.ROUND_HALF_UP);
-    const token1Result = token1ReservesSum.div(token0ReservesSum).toSignificantDigits(5, Decimal.ROUND_HALF_UP);
-    return {
+  updateMultiPoolPriceState(pairSymbol: string, reserves: CalculatedReserves, pair: PairMetadata): void {
+    this.multiPoolPrices[`${pairSymbol}:${pair.pair}`] = {
       key: pairSymbol,
-      token0: pair.token0.symbol,
-      token1: pair.token1.symbol,
-      token0Price: token0Result.toString(),
-      token1Price: token1Result.toString(),
-      reserve0: token0ReservesSum.toString(),
-      reserve1: token1ReservesSum.toString(),
-      poolSize: Object.keys(prices).length,
-      updated: new Date()
+      token0Price: reserves.token0Price,
+      token1Price: reserves.token1Price,
+      reserve0: reserves.reserve0,
+      reserve1: reserves.reserve1,
+      sqrtPriceX96: reserves.sqrtPriceX96,
+      eventSignature: reserves.eventSignature,
     };
   }
 
-  updatePriceState(price: CalculatedReserves): void {
-    this.prices[price.key] = price
+  averagePrice(prices: (string | Decimal)[]): Decimal {
+    return Decimal.sum(...prices).div(prices.length);
+  }
+
+  calculateAndUpdateAveragePrice(pairSymbol: string, pair: PairMetadata): void {
+    const prices: CalculatedReserves[] = Object.entries(this.multiPoolPrices).reduce((acc, [key, price]) => {
+      if (key.includes(':') && key.startsWith(pairSymbol)) {
+        acc.push(price);
+      }
+      return acc;
+    }, []);
+
+
+    const token0PriceAverage = this.averagePrice(prices.map((it) => it.token0Price));
+    const token1PriceAverage = this.averagePrice(prices.map((it) => it.token1Price));
+    const eventSignatures = Array.of(...new Set(...prices.map((it) => it.eventSignature)));
+
+    this.multiPoolPrices[pairSymbol] = {
+      key: pairSymbol,
+      token0: pair.token0.symbol,
+      token1: pair.token1.symbol,
+      token0Price: token0PriceAverage.toString(),
+      token1Price: token1PriceAverage.toString(),
+      poolSize: Object.keys(prices).length,
+      eventSignature: eventSignatures,
+      updated: new Date(),
+    };
   }
 
   registerListener(id: string, callback: (prices: PricesMap) => void): void {
@@ -88,25 +84,32 @@ export class PriceAggregateProcessor {
 
   async broadcastPriceUpdates(): Promise<void> {
     if (this.listeners.size > 0) {
-      this.listeners.forEach((callback) => callback(this.prices));
+      const prices = Object.entries(this.multiPoolPrices)
+        .reduce((acc, [key, pool]) => {
+          if (!key.includes(':')) {
+            acc[key] = pool;
+          }
+          return acc;
+        }, {});
+      this.listeners.forEach((callback) => callback(prices));
     }
   }
 
   async processPairReserves(reserves: CalculatedReserves, pair: PairMetadata): Promise<void> {
     const pairSymbol = PoolRegistryProducer.normalizedPairString(pair);
-    this.updateMultipoolPriceState(pairSymbol, reserves, pair);
-    const calculatedAverage = this.calculateAveragePrice(pairSymbol, pair);
-    this.updatePriceState(calculatedAverage);
-    console.log(`Updating average price for pair ${pairSymbol}. Token0: ${calculatedAverage.token0Price} - Token1: ${calculatedAverage.token1Price}`);
+    this.updateMultiPoolPriceState(pairSymbol, reserves, pair);
+    this.calculateAndUpdateAveragePrice(pairSymbol, pair);
+    const updatedPrice = this.multiPoolPrices[pairSymbol];
+    console.log(`Updating average price for pair ${pairSymbol}. Token0: ${updatedPrice.token0Price} - Token1: ${updatedPrice.token1Price}`);
     await Promise.all([
       this.producer.send({
         topic: `prices.${pairSymbol}`,
         messages: [{
-          key: calculatedAverage.key,
-          value: JSON.stringify(calculatedAverage),
+          key: pairSymbol,
+          value: JSON.stringify(updatedPrice),
         }],
       }),
-      this.broadcastPriceUpdates()
+      this.broadcastPriceUpdates(),
     ]);
   }
 
@@ -119,8 +122,8 @@ export class PriceAggregateProcessor {
       eachMessage: async ({ message }) => {
         const reserves: CalculatedReserves = JSON.parse(message.value.toString());
         const address = reserves.key.split(':')[1];
-        const pair = this.registry.getPairMetadata(address);
-        if (!pair || reserves.token0Price === '0' || reserves.token1Price === '0') {
+        const pair = await this.registry.getPairMetadata(address);
+        if (pair === undefined || reserves.token0Price === '0' || reserves.token1Price === '0') {
           return;
         }
         await this.processPairReserves(reserves, pair);

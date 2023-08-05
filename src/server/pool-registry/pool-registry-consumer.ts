@@ -5,6 +5,7 @@ import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { v4 as uuid } from 'uuid';
 import { PairMetadata } from './types';
+import { sleep } from '../../libs/sleep';
 
 export class PoolRegistryConsumer {
   provider: ContractRunner;
@@ -50,7 +51,12 @@ export class PoolRegistryConsumer {
     });
   }
 
-  getPairMetadata(address: string): PairMetadata | undefined {
+  async getPairMetadata(address: string): Promise<PairMetadata | undefined> {
+    let maxRepetions = 300 // 100 * 100 = 30_000ms
+    while(this.pairs.get(address) === undefined && maxRepetions > 1) {
+      maxRepetions -= 1
+      await sleep(100);
+    }
     return this.pairs.get(address);
   }
 
