@@ -133,7 +133,7 @@ export class EventProcessor {
       await this.initialize();
     }
     return Promise.all([
-      this.provider.on(this.filter, (log) => this.processLog(log)),
+      this.provider.on(this.filter, async (log) => await this.processLog(log)),
       this.processOutbox(),
     ]);
   }
