@@ -1,4 +1,4 @@
-import { ethers, EventFilter, Interface, JsonRpcProvider, Log } from 'ethers';
+import { ethers, EventFilter, Interface, JsonRpcProvider, Log, WebSocketProvider } from 'ethers';
 import { AdminFactory, KafkaAdmin } from '../../kafka/admin';
 import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
 import UniswapV2Abi from '../../abis/uniswap-v2.json';
@@ -9,7 +9,7 @@ import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { sleep } from '../../libs/sleep';
 
 export class SyncEventProcessor {
-  provider: JsonRpcProvider;
+  provider: JsonRpcProvider | WebSocketProvider;
   registry: PoolRegistryConsumer;
   uniswapV2Interface: Interface;
   eventSignature: string;
@@ -23,7 +23,7 @@ export class SyncEventProcessor {
   messageOutbox: ProducerRecord[] = [];
   shuttingDown = false;
 
-  constructor(provider: JsonRpcProvider, registry: PoolRegistryConsumer) {
+  constructor(provider: JsonRpcProvider | WebSocketProvider, registry: PoolRegistryConsumer) {
     this.provider = provider;
     this.registry = registry;
     this.uniswapV2Interface = new ethers.Interface(UniswapV2Abi);
@@ -110,7 +110,7 @@ export class SyncEventProcessor {
     ]);
   }
 
-  async run(): Promise<[JsonRpcProvider, void]> {
+  async run(): Promise<[JsonRpcProvider | WebSocketProvider, void]> {
     if (!this.initialized) {
       await this.initialize();
     }
