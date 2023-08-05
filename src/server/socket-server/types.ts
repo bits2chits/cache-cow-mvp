@@ -1,7 +1,7 @@
-import { CalculatedReserves } from '../../events/blockchain/types';
+import { CalculatedReserves, CalculatedReservesUniswapV3 } from '../../events/blockchain/types';
 import { PoolDeltas } from '../block-processor/types';
 
-export type FrontendPriceEntries = [string, CalculatedReserves][]
+export type FrontendPriceEntries = [string, CalculatedReserves | CalculatedReservesUniswapV3][]
 
 export type FrontendPoolDeltas = [string, PoolDeltas][]
 export interface SocketEvents {

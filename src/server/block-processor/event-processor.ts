@@ -1,17 +1,17 @@
 import { ethers, EventFilter, Interface, JsonRpcProvider, Log, WebSocketProvider } from 'ethers';
 import { AdminFactory, KafkaAdmin } from '../../kafka/admin';
 import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
-import UniswapV2Abi from '../../abis/uniswap-v2.json';
-import { Sync } from '../../events/blockchain/sync';
 import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
 import { ProducerRecord } from 'kafkajs';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { sleep } from '../../libs/sleep';
+import { EventFactory } from '../../events/blockchain/event-factory';
+import { AbstractEvent } from '../../events/blockchain/abstract-event';
 
-export class SyncEventProcessor {
+export class EventProcessor {
   provider: JsonRpcProvider | WebSocketProvider;
   registry: PoolRegistryConsumer;
-  uniswapV2Interface: Interface;
+  poolInterface: Interface;
   eventSignature: string;
   filter: EventFilter;
   admin: KafkaAdmin;
@@ -23,11 +23,16 @@ export class SyncEventProcessor {
   messageOutbox: ProducerRecord[] = [];
   shuttingDown = false;
 
-  constructor(provider: JsonRpcProvider | WebSocketProvider, registry: PoolRegistryConsumer) {
+  constructor(
+    provider: JsonRpcProvider | WebSocketProvider,
+    registry: PoolRegistryConsumer,
+    eventSignature: string,
+    poolInterface: Interface,
+  ) {
     this.provider = provider;
     this.registry = registry;
-    this.uniswapV2Interface = new ethers.Interface(UniswapV2Abi);
-    this.eventSignature = 'Sync(uint112,uint112)';
+    this.poolInterface = poolInterface;
+    this.eventSignature = eventSignature;
     this.filter = {
       address: null,
       topics: [ethers.id(this.eventSignature)],
@@ -47,8 +52,21 @@ export class SyncEventProcessor {
     if (this.shuttingDown) {
       return;
     }
-    const parsedLog = this.uniswapV2Interface.parseLog(log);
-    const event = new Sync(log.address, this.registry.getPairMetadata(log.address), parsedLog);
+    const parsedLog = this.poolInterface.parseLog(log);
+    const pair = await this.registry.getPairMetadata(log.address);
+    if (pair === undefined) {
+      console.warn(`Pair data was not available, skipping log with address: ${log.address}`)
+      return;
+    }
+
+    const event = EventFactory.getEvent<AbstractEvent>(
+      this.eventSignature, {
+        address: log.address,
+        pair,
+        log: parsedLog,
+      },
+    );
+
     this.poolAddedOutbox.set(log.address, log);
     this.messageOutbox.push({
       topic: log.address,
@@ -106,7 +124,7 @@ export class SyncEventProcessor {
     clearInterval(this.messageOutboxInterval);
     await Promise.all([
       await this.processPoolAdded(),
-      await this.processMessages()
+      await this.processMessages(),
     ]);
   }
 
@@ -115,8 +133,8 @@ export class SyncEventProcessor {
       await this.initialize();
     }
     return Promise.all([
-      this.provider.on(this.filter, (log) => this.processLog(log)),
-      this.processOutbox()
+      this.provider.on(this.filter, async (log) => await this.processLog(log)),
+      this.processOutbox(),
     ]);
   }
 
