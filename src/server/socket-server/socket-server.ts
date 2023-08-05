@@ -45,9 +45,7 @@ export async function socketServer(
 
   priceAggregateProcessor.registerListener(uuid(), (prices: PricesMap) => {
     priceState = prices;
-    sortedPairs = Array.of(...new Set(Object.values(prices)
-      .flatMap((p) => [p.token0, p.token1])
-      .sort((a, b) => a.localeCompare(b))));
+    sortedPairs = Object.keys(prices).sort((a, b) => a.localeCompare(b)); 
     sockets.forEach((socket: Socket<SocketEvents>) => {
       socket.emit('prices', filterPrices(socket.data.filters));
       socket.emit('pairs', sortedPairs);
