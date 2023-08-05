@@ -1,4 +1,5 @@
 import { Decimal } from 'decimal.js';
+import { PairMetadata } from '../../server/pool-registry/types';
 
 export interface AbiInputsElement {
   indexed?: boolean;

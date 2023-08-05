@@ -9,7 +9,6 @@ async function main(): Promise<void> {
   const chain = Chain.Polygon;
   const rpcCollection = new RpcCollection();
   const provider = rpcCollection.getEthersProvider(chain);
-  provider.pollingInterval = 2000;
 
   const registryProducer = new PoolRegistryProducer(provider);
   const registry = new PoolRegistryConsumer();
