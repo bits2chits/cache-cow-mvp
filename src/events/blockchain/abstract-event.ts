@@ -1,5 +1,7 @@
 import {AbiElement, AbiInputsElement} from "./types"
 import {LogDescription} from "ethers"
+import JSBI from 'jsbi';
+import { Decimal } from 'decimal.js';
 
 export abstract class AbstractEvent {
   abiElement: AbiElement
@@ -34,6 +36,17 @@ export abstract class AbstractEvent {
       .forEach((currentValue: AbiInputsElement, currentIndex: number): void => {
         this.set(currentValue.name || currentIndex.toString(), this.log.args[currentIndex])
       })
+  }
+
+
+  static exponentialDecimals(decimals: string | number): JSBI {
+    return JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(decimals))
+  }
+
+  static toSignificant(amount: string | bigint | Decimal, decimalsExp: JSBI): Decimal {
+    return new Decimal(amount.toString())
+      .div(decimalsExp.toString())
+      .toSignificantDigits(5, Decimal.ROUND_HALF_UP)
   }
 
   abstract toJSON(): object

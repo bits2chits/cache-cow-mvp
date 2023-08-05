@@ -147,9 +147,9 @@ export class MultipoolPriceConsumer {
     return this.consumer.run({
       eachBatch: async ({ batch }) => {
         const reserves: CalculatedReserves[] = batch.messages.map((message) => JSON.parse(message.value.toString()));
-        await Promise.all(reserves.map((reserve) => {
+        await Promise.all(reserves.map(async (reserve) => {
           const address = reserve.key.split(':')[1];
-          const pair = this.registry.getPairMetadata(address);
+          const pair = await this.registry.getPairMetadata(address);
           if (!pair || reserve.token0Price === '0' || reserve.token1Price === '0') {
             return Promise.resolve();
           }
