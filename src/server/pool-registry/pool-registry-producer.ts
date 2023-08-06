@@ -7,7 +7,7 @@ import { KafkaMessage } from 'kafkajs';
 import UniswapV2Abi from '../../abis/uniswap-v2.json';
 import Erc20Abi from '../../abis/erc20.json';
 import { Erc20Metadata, PairMetadata } from './types';
-import { AdminFactory, KafkaAdmin } from '../../kafka/admin';
+import { KafkaAdmin } from '../../kafka/admin';
 
 export class PoolRegistryProducer {
   provider: ContractRunner;
@@ -18,22 +18,17 @@ export class PoolRegistryProducer {
   consumer: KafkaConsumer;
   initialized = false;
 
-  constructor(provider: ContractRunner) {
+  constructor(provider: ContractRunner, admin: KafkaAdmin) {
     this.provider = provider;
+    this.admin = admin;
     this.uniswapV2Interface = new ethers.Interface(UniswapV2Abi);
     this.erc20Interface = new ethers.Interface(Erc20Abi);
   }
 
   async initialize(): Promise<void> {
-    this.admin = await AdminFactory.getAdmin();
-    const topics: string[] = (await this.admin.listTopics());
-    if (!topics.includes(SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED)) {
-      console.info(`Creating system event topic: ${SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED}`);
-      await this.admin.createTopic(SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED);
-    }
     this.producer = await ProducerFactory.getProducer();
     this.consumer = await ConsumerFactory.getConsumer({
-      topics: [SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED],
+      topics: [SYSTEM_EVENT_TOPICS.LP_POOL_ADDED],
     }, {
       groupId: uuid(),
     });
@@ -90,10 +85,8 @@ export class PoolRegistryProducer {
     return this.consumer.run({
       eachMessage: async ({ message }): Promise<void> => {
         const pair = await this.processPoolAddress(message);
-        await Promise.all([
-          this.createTargetPriceTopic(pair),
-          this.updateLpPoolRegistry(pair),
-        ]);
+        await this.createTargetPriceTopic(pair);
+        await this.updateLpPoolRegistry(pair);
       },
     });
   }

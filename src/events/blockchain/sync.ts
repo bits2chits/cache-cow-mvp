@@ -1,15 +1,13 @@
 import UniswapV2Abi from '../../abis/uniswap-v2.json';
 import { AbstractEvent } from './abstract-event';
-import { LogDescription } from 'ethers';
+import { Log, LogDescription } from 'ethers';
 import { PairMetadata } from '../../server/pool-registry/types';
 import { CalculatedReserves, EventSignature, PairPrice } from './types';
 import { Decimal } from 'decimal.js';
 
 export class Sync extends AbstractEvent {
-  constructor(address: string, pair: PairMetadata, log: LogDescription) {
-    super(UniswapV2Abi, address, log);
-    this.set('pair', pair);
-    this.set('key', `${log.topic}:${address}`);
+  constructor(address: string, pair: PairMetadata, log: Log, decodedLog: LogDescription) {
+    super(UniswapV2Abi, address, pair, log, decodedLog);
   }
 
   calcPrice(): PairPrice {
@@ -31,6 +29,7 @@ export class Sync extends AbstractEvent {
   toJSON(): CalculatedReserves {
     return {
       key: this.get('key'),
+      log: this.get('log'),
       eventSignature: EventSignature.Sync,
       reserve0: this.get('reserve0').toString(),
       reserve1: this.get('reserve1').toString(),

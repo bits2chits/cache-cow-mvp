@@ -1,5 +1,4 @@
 import { ContractRunner } from 'ethers';
-import { AdminFactory, KafkaAdmin } from '../../kafka/admin';
 import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
 import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
@@ -9,8 +8,7 @@ import { sleep } from '../../libs/sleep';
 
 export class PoolRegistryConsumer {
   provider: ContractRunner;
-  admin: KafkaAdmin;
-  existingPoolAddresses: Set<string>;
+  existingPoolAddresses: Set<string> = new Set();
   producer: KafkaProducer;
   consumer: KafkaConsumer;
   initialized = false;
@@ -18,13 +16,6 @@ export class PoolRegistryConsumer {
   listeners = new Map<string, (pairs: PairMetadata[]) => void>();
 
   async initialize(): Promise<void> {
-    this.admin = await AdminFactory.getAdmin();
-    const topics: string[] = (await this.admin.listTopics());
-    this.existingPoolAddresses = new Set(topics.filter((topic) => !topic.startsWith('__') && !topic.includes('.')));
-    if (!topics.includes(SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY)) {
-      console.log(`Creating system event topic: ${SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY}`);
-      await this.admin.createTopic(SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY);
-    }
     this.producer = await ProducerFactory.getProducer();
     this.consumer = await ConsumerFactory.getConsumer({
       topics: [SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY],
@@ -52,10 +43,11 @@ export class PoolRegistryConsumer {
   }
 
   async getPairMetadata(address: string): Promise<PairMetadata | undefined> {
-    let maxRepetions = 300 // 100 * 100 = 30_000ms
-    while(this.pairs.get(address) === undefined && maxRepetions > 1) {
-      maxRepetions -= 1
+    let maxRepetitions = 10 // 100 * 10 = 1_000ms
+    while(this.pairs.get(address) === undefined && maxRepetitions > 1) {
+      maxRepetitions -= 1
       await sleep(100);
+      // console.log('No pair', address, this.pairs.get(address))
     }
     return this.pairs.get(address);
   }

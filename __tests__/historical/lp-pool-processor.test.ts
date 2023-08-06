@@ -10,7 +10,7 @@ class TestEvent extends AbstractEvent {
 
   toJSON(): object {
     return {
-      ...this.log,
+      ...this.parsedLog,
     };
   }
 }

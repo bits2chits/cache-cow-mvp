@@ -1,5 +1,4 @@
 import { ethers, EventFilter, Interface, JsonRpcProvider, Log, WebSocketProvider } from 'ethers';
-import { AdminFactory, KafkaAdmin } from '../../kafka/admin';
 import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
 import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
 import { ProducerRecord } from 'kafkajs';
@@ -14,7 +13,6 @@ export class EventProcessor {
   poolInterface: Interface;
   eventSignature: string;
   filter: EventFilter;
-  admin: KafkaAdmin;
   producer: KafkaProducer;
   poolAddedOutboxInterval: NodeJS.Timer;
   messageOutboxInterval: NodeJS.Timer;
@@ -40,36 +38,35 @@ export class EventProcessor {
   }
 
   async initialize(): Promise<void> {
-    this.admin = await AdminFactory.getAdmin();
     this.producer = await ProducerFactory.getProducer();
     this.poolAddedOutboxInterval = setInterval(() => this.processPoolAdded(), 1000);
     this.messageOutboxInterval = setInterval(() => this.processMessages(), 100);
     this.initialized = true;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async processLog(log: any): Promise<void> {
+  async processLog(log: Log): Promise<void> {
     if (this.shuttingDown) {
       return;
     }
-    const parsedLog = this.poolInterface.parseLog(log);
     const pair = await this.registry.getPairMetadata(log.address);
     if (pair === undefined) {
-      console.warn(`Pair data was not available, skipping log with address: ${log.address}`)
+      console.info(`Pair data was not available. Registering new pair on address: ${log.address}`)
+      this.poolAddedOutbox.set(log.address, log);
       return;
     }
 
+    const parsedLog = this.poolInterface.parseLog({ topics: Array.from(log.topics), data: log.data });
     const event = EventFactory.getEvent<AbstractEvent>(
       this.eventSignature, {
         address: log.address,
         pair,
-        log: parsedLog,
+        log,
+        parsedLog: parsedLog,
       },
     );
 
-    this.poolAddedOutbox.set(log.address, log);
     this.messageOutbox.push({
-      topic: log.address,
+      topic: SYSTEM_EVENT_TOPICS.LP_POOL_EVENT_LOGS,
       messages: [{
         key: event.get('key'),
         value: JSON.stringify(event),
@@ -79,17 +76,13 @@ export class EventProcessor {
 
   async processMessages(): Promise<void> {
     for (let i = 0; i < this.messageOutbox.length; i++) {
-      if (this.registry.has(this.messageOutbox[i].topic)) {
-        console.info(`Processing message ${i + 1}`);
-        const message = this.messageOutbox.shift();
-        try {
-          await this.producer.send(message);
-        } catch (e) {
-          console.error('Could not process message', e);
-          this.messageOutbox.push(message);
-        }
-      } else {
-        console.info(`Skipping message ${i + 1}. Awaiting creation of topic: ${this.messageOutbox[i].topic}`);
+      console.info(`Processing message ${i + 1}`);
+      const message = this.messageOutbox.shift();
+      try {
+        await this.producer.send(message);
+      } catch (e) {
+        console.error('Could not process message', e);
+        this.messageOutbox.push(message);
       }
     }
   }
@@ -97,9 +90,8 @@ export class EventProcessor {
   async processPoolAdded(): Promise<void> {
     for (const [address, log] of this.poolAddedOutbox) {
       if (!this.registry.has(address)) {
-        await this.admin.createTopic(address);
         await this.producer.send({
-          topic: SYSTEM_EVENT_TOPICS.UNISWAP_LP_POOL_ADDED,
+          topic: SYSTEM_EVENT_TOPICS.LP_POOL_ADDED,
           messages: [{
             key: log.address,
             value: JSON.stringify(log, (_, value) =>
@@ -110,7 +102,7 @@ export class EventProcessor {
           }],
         }).finally(() => {
           this.poolAddedOutbox.delete(address);
-          console.info(`Added topic ${log.address} to kafka`);
+          console.info(`Added pool ${log.address} to registry.`);
         });
       }
     }
@@ -133,7 +125,7 @@ export class EventProcessor {
       await this.initialize();
     }
     return Promise.all([
-      this.provider.on(this.filter, async (log) => await this.processLog(log)),
+      this.provider.on(this.filter, async (log: Log) => await this.processLog(log)),
       this.processOutbox(),
     ]);
   }

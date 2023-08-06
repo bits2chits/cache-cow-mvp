@@ -1,6 +1,6 @@
 import UniswapV3Abi from '../../abis/uniswap-v3.json';
 import { AbstractEvent } from './abstract-event';
-import { LogDescription } from 'ethers';
+import { Log, LogDescription } from 'ethers';
 import { PairMetadata } from '../../server/pool-registry/types';
 import { CalculatedReserves, EventSignature, PairPrice } from './types';
 import { Decimal } from 'decimal.js';
@@ -9,10 +9,8 @@ const Q96 = new Decimal(2).pow(new Decimal(96));
 const Q192 = Q96.pow(new Decimal(2));
 
 export class Swap extends AbstractEvent {
-  constructor(address: string, pair: PairMetadata, log: LogDescription) {
-    super(UniswapV3Abi, address, log);
-    this.set('pair', pair);
-    this.set('key', `${log.topic}:${address}`);
+  constructor(address: string, pair: PairMetadata, log: Log, parsedLog: LogDescription) {
+    super(UniswapV3Abi, address, pair, log, parsedLog);
   }
 
 
@@ -39,8 +37,9 @@ export class Swap extends AbstractEvent {
   toJSON(): CalculatedReserves {
     return {
       key: this.get('key'),
-      sqrtPriceX96: this.get('sqrtPriceX96').toString(),
+      log: this.get('log'),
       eventSignature: EventSignature.SwapV3,
+      sqrtPriceX96: this.get('sqrtPriceX96').toString(),
       ...this.calcPrice(),
     };
   }

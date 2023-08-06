@@ -1,5 +1,5 @@
 import { Admin } from 'kafkajs';
-import { KafkaService, KafkaServiceInstance } from './index';
+import { KafkaService, KafkaServiceInstance, SYSTEM_EVENT_TOPICS } from './index';
 import { ethers } from 'ethers';
 
 export class KafkaAdmin {
@@ -17,6 +17,12 @@ export class KafkaAdmin {
     if (!this.admin) {
       this.admin = await this.kafkaService.createAdmin();
       await this.admin.connect();
+      const topics = await this.listTopics();
+      for (const topic of Object.values(SYSTEM_EVENT_TOPICS)) {
+        if (!topics.includes(topic)) {
+          await this.createTopic(topic);
+        }
+      }
     }
     return this.admin;
   }
@@ -60,6 +66,11 @@ export class KafkaAdmin {
   async listTopics(): Promise<string[]> {
     const admin = await this.getInstance();
     return admin.listTopics();
+  }
+
+  async getPriceTopics(): Promise<string[]> {
+    const topics = await this.admin.listTopics()
+    return topics.filter((topic) => topic.startsWith('prices.'));
   }
 
   async disconnect(): Promise<void> {
