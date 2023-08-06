@@ -47,7 +47,6 @@ export class PoolRegistryConsumer {
     while(this.pairs.get(address) === undefined && maxRepetitions > 1) {
       maxRepetitions -= 1
       await sleep(100);
-      // console.log('No pair', address, this.pairs.get(address))
     }
     return this.pairs.get(address);
   }
