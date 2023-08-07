@@ -1,16 +1,17 @@
 import { Decimal } from 'decimal.js';
-import { PairMetadata } from '../../server/pool-registry/types';
-import { LogDescription } from 'ethers';
+import { Log, LogDescription } from 'ethers';
+import { PairMetadata } from '../../server/producers/types';
 
 export enum EventSignature {
   Sync = 'Sync(uint112,uint112)',
-  SwapV3 = 'Swap(address,address,int256,int256,uint160,uint128,int24)'
+  SwapV3 = 'Swap(address,address,int256,int256,uint160,uint128,int24)',
+  PairCreated = 'PairCreated(address,address,address,uint256)'
 }
 
 export interface EventArgs {
-  address: string;
   pair: PairMetadata;
-  log: LogDescription;
+  log: Log;
+  parsedLog: LogDescription;
 }
 
 
@@ -55,7 +56,8 @@ export interface ReservesMetadata {
 
 export interface Metadata {
   key: string;
-  eventSignature?: EventSignature | string[]
+  eventSignatures?: EventSignature[];
+  log?: Log;
 }
 
 export type CalculatedReservesBase = PairPrice & ReservesMetadata & Metadata

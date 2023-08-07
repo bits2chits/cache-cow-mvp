@@ -1,9 +1,9 @@
 import { v4 as uuid } from 'uuid';
 import { Server, Socket } from 'socket.io';
 import { FrontendPriceEntries, SocketEvents } from './types';
-import { PricesMap } from '../block-processor/types';
-import { PriceAggregateProcessor } from '../block-processor/price-aggregate-processor';
 import express, { Server as ExpressServer } from 'express';
+import { PriceAggregateProcessor } from '../processors/price-aggregate-processor';
+import { PricesMap } from '../processors/types';
 import * as http from 'http';
 
 

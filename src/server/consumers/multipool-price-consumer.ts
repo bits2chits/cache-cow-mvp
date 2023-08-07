@@ -1,19 +1,18 @@
 import { EventFilter } from 'ethers/lib.esm';
-import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
-import { AdminFactory, KafkaAdmin } from '../../kafka/admin';
+import { PoolRegistryConsumer } from '../processors/pool-registry-consumer';
 import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { MultiPoolPricesMap, PoolDeltas } from '../block-processor/types';
 import { v4 as uuid } from 'uuid';
 import { CalculatedReserves } from '../../events/blockchain/types';
-import { PairMetadata } from '../pool-registry/types';
-import { PoolRegistryProducer } from '../pool-registry/pool-registry-producer';
+import { PairMetadata } from '../processors/types';
+import { PoolRegistryProducer } from '../processors/pool-registry-producer';
 import { Sync } from '../../events/blockchain/sync';
 import { Decimal } from 'decimal.js';
+import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 
 export class MultipoolPriceConsumer {
   registry: PoolRegistryConsumer;
   filter: EventFilter;
-  admin: KafkaAdmin;
   consumer: KafkaConsumer;
   initialized = false;
   multiPoolPrices: MultiPoolPricesMap = {};
@@ -25,10 +24,8 @@ export class MultipoolPriceConsumer {
   }
 
   async initialize(): Promise<void> {
-    this.admin = await AdminFactory.getAdmin();
-    const topics = (await this.admin.listTopics()).filter((topic) => !topic.startsWith('__') && !topic.includes('.'));
     this.consumer = await ConsumerFactory.getConsumer({
-      topics,
+      topics: [SYSTEM_EVENT_TOPICS.LP_POOL_EVENT_LOGS],
       fromBeginning: true,
     }, {
       groupId: uuid(),
@@ -148,7 +145,7 @@ export class MultipoolPriceConsumer {
       eachBatch: async ({ batch }) => {
         const reserves: CalculatedReserves[] = batch.messages.map((message) => JSON.parse(message.value.toString()));
         await Promise.all(reserves.map(async (reserve) => {
-          const address = reserve.key.split(':')[1];
+          const address = reserve.key.split(':')[0];
           const pair = await this.registry.getPairMetadata(address);
           if (!pair || reserve.token0Price === '0' || reserve.token1Price === '0') {
             return Promise.resolve();
