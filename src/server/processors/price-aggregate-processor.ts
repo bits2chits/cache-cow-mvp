@@ -52,7 +52,7 @@ export class PriceAggregateProcessor {
   }
 
   averagePrice(prices: (string | Decimal)[]): Decimal {
-    return Decimal.sum(...prices).div(prices.length);
+    return Decimal.sum(...prices).div(prices.length).toSignificantDigits(5, Decimal.ROUND_HALF_UP);
   }
 
   calculateAndUpdateAveragePrice(pairSymbol: string, pair: PairMetadata): void {
