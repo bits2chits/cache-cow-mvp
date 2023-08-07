@@ -7,20 +7,17 @@ import { KafkaMessage } from 'kafkajs';
 import UniswapV2Abi from '../../abis/uniswap-v2.json';
 import Erc20Abi from '../../abis/erc20.json';
 import { Erc20Metadata, PairMetadata } from './types';
-import { KafkaAdmin } from '../../kafka/admin';
 
 export class PoolRegistryProducer {
   provider: ContractRunner;
   uniswapV2Interface: Interface;
   erc20Interface: Interface;
-  admin: KafkaAdmin;
   producer: KafkaProducer;
   consumer: KafkaConsumer;
   initialized = false;
 
-  constructor(provider: ContractRunner, admin: KafkaAdmin) {
+  constructor(provider: ContractRunner) {
     this.provider = provider;
-    this.admin = admin;
     this.uniswapV2Interface = new ethers.Interface(UniswapV2Abi);
     this.erc20Interface = new ethers.Interface(Erc20Abi);
   }
@@ -64,10 +61,6 @@ export class PoolRegistryProducer {
       .replace(/\W/gi, '');
   }
 
-  async createTargetPriceTopic(pair: PairMetadata): Promise<void> {
-    await this.admin.createTopic(`price.${PoolRegistryProducer.normalizedPairString(pair)}`);
-  }
-
   async updateLpPoolRegistry(pair: PairMetadata): Promise<void> {
     await this.producer.send({
       topic: SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY,
@@ -85,7 +78,6 @@ export class PoolRegistryProducer {
     return this.consumer.run({
       eachMessage: async ({ message }): Promise<void> => {
         const pair = await this.processPoolAddress(message);
-        await this.createTargetPriceTopic(pair);
         await this.updateLpPoolRegistry(pair);
       },
     });

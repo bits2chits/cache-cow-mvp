@@ -1,4 +1,4 @@
-import { PoolRegistryConsumer } from '../server/pool-registry/pool-registry-consumer';
+import { PoolRegistryConsumer } from '../server/processors/pool-registry-consumer';
 import { MultipoolPriceConsumer } from '../server/consumers/multipool-price-consumer';
 import { socketServer } from './socket-server';
 

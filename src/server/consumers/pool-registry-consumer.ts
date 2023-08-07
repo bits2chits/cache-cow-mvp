@@ -3,8 +3,8 @@ import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
 import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { v4 as uuid } from 'uuid';
-import { PairMetadata } from './types';
 import { sleep } from '../../libs/sleep';
+import { PairMetadata } from '../producers/types';
 
 export class PoolRegistryConsumer {
   provider: ContractRunner;
