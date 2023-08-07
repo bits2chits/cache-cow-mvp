@@ -2,7 +2,7 @@ import { AbiElement, AbiInputsElement } from './types';
 import { Log, LogDescription } from 'ethers';
 import JSBI from 'jsbi';
 import { Decimal } from 'decimal.js';
-import { PairMetadata } from '../../server/pool-registry/types';
+import { PairMetadata } from '../../server/producers/types';
 
 export abstract class AbstractEvent {
   abiElement: AbiElement;
@@ -10,7 +10,7 @@ export abstract class AbstractEvent {
   log: Log;
   parsedLog: LogDescription;
 
-  protected constructor(abi: AbiElement[], address: string, pair: PairMetadata, log: Log, parsedLog: LogDescription) {
+  protected constructor(abi: AbiElement[], pair: PairMetadata, log: Log, parsedLog: LogDescription) {
     this.log = log;
     this.parsedLog = parsedLog;
     for (const fragment of abi) {

@@ -1,19 +1,21 @@
-import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
+import { PoolRegistryConsumer } from '../consumers/pool-registry-consumer';
 import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
 import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { v4 as uuid } from 'uuid';
 import { CalculatedReserves } from '../../events/blockchain/types';
 import { MultiPoolPricesMap, PricesMap } from './types';
-import { PairMetadata } from '../pool-registry/types';
 import { Decimal } from 'decimal.js';
-import { PoolRegistryProducer } from '../pool-registry/pool-registry-producer';
+import { PoolRegistryProducer } from '../producers/pool-registry-producer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
+import { PairMetadata } from '../producers/types';
+import { HistoricalPricesProducer } from '../producers/historical-prices-producer';
 
 
 export class PriceAggregateProcessor {
   registry: PoolRegistryConsumer;
   producer: KafkaProducer;
   consumer: KafkaConsumer;
+  priceMapperConsumer: KafkaConsumer;
   initialized = false;
   multiPoolPrices: MultiPoolPricesMap = {};
   listeners = new Map<string, (pairs: PricesMap) => void>();
@@ -29,6 +31,11 @@ export class PriceAggregateProcessor {
     }, {
       groupId: uuid(),
     });
+    this.priceMapperConsumer = await ConsumerFactory.getConsumer({
+      topics: [SYSTEM_EVENT_TOPICS.TOKEN_PRICE_PER_MINUTE, SYSTEM_EVENT_TOPICS.TOKEN_PRICE_PER_HOUR],
+    }, {
+      groupId: uuid(),
+    });
     this.initialized = true;
   }
 
@@ -40,7 +47,7 @@ export class PriceAggregateProcessor {
       reserve0: reserves.reserve0,
       reserve1: reserves.reserve1,
       sqrtPriceX96: reserves.sqrtPriceX96,
-      eventSignature: reserves.eventSignature,
+      eventSignatures: reserves.eventSignatures,
     };
   }
 
@@ -59,7 +66,7 @@ export class PriceAggregateProcessor {
 
     const token0PriceAverage = this.averagePrice(prices.map((it) => it.token0Price));
     const token1PriceAverage = this.averagePrice(prices.map((it) => it.token1Price));
-    const eventSignatures = Array.of(...new Set(...prices.map((it) => it.eventSignature)));
+    const eventSignatures = Array.of(...new Set(...prices.map((it) => it.eventSignatures)));
 
     this.multiPoolPrices[pairSymbol] = {
       key: pairSymbol,
@@ -68,7 +75,7 @@ export class PriceAggregateProcessor {
       token0Price: token0PriceAverage.toString(),
       token1Price: token1PriceAverage.toString(),
       poolSize: Object.keys(prices).length,
-      eventSignature: eventSignatures,
+      eventSignatures: eventSignatures,
       updated: new Date(),
     };
   }
@@ -98,9 +105,9 @@ export class PriceAggregateProcessor {
     console.log(`Updating average price for pair ${pairSymbol}. Token0: ${updatedPrice.token0Price} - Token1: ${updatedPrice.token1Price}`);
     await Promise.all([
       this.producer.send({
-        topic: `prices.${pairSymbol}`,
+        topic: SYSTEM_EVENT_TOPICS.TOKEN_PRICE_PER_MINUTE,
         messages: [{
-          key: pairSymbol,
+          key: `${pairSymbol}-${HistoricalPricesProducer.minuteSpecificIsoString()}`,
           value: JSON.stringify(updatedPrice),
         }],
       }),
@@ -108,12 +115,11 @@ export class PriceAggregateProcessor {
     ]);
   }
 
-
   async run(): Promise<void> {
     if (!this.initialized) {
       await this.initialize();
     }
-    return this.consumer.run({
+    await this.consumer.run({
       eachMessage: async ({ message }) => {
         const reserves: CalculatedReserves = JSON.parse(message.value.toString());
         const address = reserves.key.split(':')[0];

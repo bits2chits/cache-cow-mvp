@@ -35,7 +35,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "",
+        "name": "poolIndex",
         "type": "uint256"
       }
     ],

@@ -68,11 +68,6 @@ export class KafkaAdmin {
     return admin.listTopics();
   }
 
-  async getPriceTopics(): Promise<string[]> {
-    const topics = await this.admin.listTopics()
-    return topics.filter((topic) => topic.startsWith('prices.'));
-  }
-
   async disconnect(): Promise<void> {
     await this.admin?.disconnect();
   }

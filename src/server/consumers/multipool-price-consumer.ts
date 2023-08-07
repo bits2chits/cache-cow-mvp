@@ -1,11 +1,11 @@
 import { EventFilter } from 'ethers/lib.esm';
-import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
+import { PoolRegistryConsumer } from '../processors/pool-registry-consumer';
 import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { MultiPoolPricesMap, PoolDeltas } from '../block-processor/types';
 import { v4 as uuid } from 'uuid';
 import { CalculatedReserves } from '../../events/blockchain/types';
-import { PairMetadata } from '../pool-registry/types';
-import { PoolRegistryProducer } from '../pool-registry/pool-registry-producer';
+import { PairMetadata } from '../processors/types';
+import { PoolRegistryProducer } from '../processors/pool-registry-producer';
 import { Sync } from '../../events/blockchain/sync';
 import { Decimal } from 'decimal.js';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
