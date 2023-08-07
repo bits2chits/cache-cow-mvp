@@ -8,13 +8,15 @@ import { ethers } from 'ethers';
 import UniswapV2Abi from './abis/uniswap-v2.json'
 import UniswapV3Abi from './abis/uniswap-v3.json'
 import { EventSignature } from './events/blockchain/types';
+import { AdminFactory } from './kafka/admin';
 
 async function main(): Promise<void> {
   const chain = Chain.Polygon;
   const rpcCollection = new RpcCollection();
   const provider = rpcCollection.getEthersProvider(chain);
+  const kafkaAdmin = await AdminFactory.getAdmin();
 
-  const registryProducer = new PoolRegistryProducer(provider);
+  const registryProducer = new PoolRegistryProducer(provider, kafkaAdmin);
   const registry = new PoolRegistryConsumer();
   const uniswapV2EventProcessor = new EventProcessor(provider, registry, EventSignature.Sync, new ethers.Interface(UniswapV2Abi));
   const uniswapV3EventProcessor = new EventProcessor(provider, registry, EventSignature.SwapV3, new ethers.Interface(UniswapV3Abi));

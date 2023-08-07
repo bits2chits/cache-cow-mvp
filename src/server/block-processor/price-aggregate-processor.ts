@@ -1,20 +1,17 @@
 import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
-import { AdminFactory, KafkaAdmin } from '../../kafka/admin';
 import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
 import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { v4 as uuid } from 'uuid';
 import { CalculatedReserves } from '../../events/blockchain/types';
 import { MultiPoolPricesMap, PricesMap } from './types';
-import { Sync } from '../../events/blockchain/sync';
 import { PairMetadata } from '../pool-registry/types';
 import { Decimal } from 'decimal.js';
 import { PoolRegistryProducer } from '../pool-registry/pool-registry-producer';
-import { AbstractEvent } from '../../events/blockchain/abstract-event';
+import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 
 
 export class PriceAggregateProcessor {
   registry: PoolRegistryConsumer;
-  admin: KafkaAdmin;
   producer: KafkaProducer;
   consumer: KafkaConsumer;
   initialized = false;
@@ -26,11 +23,9 @@ export class PriceAggregateProcessor {
   }
 
   async initialize(): Promise<void> {
-    this.admin = await AdminFactory.getAdmin();
-    const topics = (await this.admin.listTopics()).filter((topic) => !topic.startsWith('__') && !topic.includes('.'));
     this.producer = await ProducerFactory.getProducer();
     this.consumer = await ConsumerFactory.getConsumer({
-      topics,
+      topics: [SYSTEM_EVENT_TOPICS.LP_POOL_EVENT_LOGS],
     }, {
       groupId: uuid(),
     });
@@ -121,7 +116,7 @@ export class PriceAggregateProcessor {
     return this.consumer.run({
       eachMessage: async ({ message }) => {
         const reserves: CalculatedReserves = JSON.parse(message.value.toString());
-        const address = reserves.key.split(':')[1];
+        const address = reserves.key.split(':')[0];
         const pair = await this.registry.getPairMetadata(address);
         if (pair === undefined || reserves.token0Price === '0' || reserves.token1Price === '0') {
           return;
