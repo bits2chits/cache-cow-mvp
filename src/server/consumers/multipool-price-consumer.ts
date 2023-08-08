@@ -1,14 +1,14 @@
 import { EventFilter } from 'ethers/lib.esm';
-import { PoolRegistryConsumer } from '../processors/pool-registry-consumer';
 import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
-import { MultiPoolPricesMap, PoolDeltas } from '../block-processor/types';
 import { v4 as uuid } from 'uuid';
 import { CalculatedReserves } from '../../events/blockchain/types';
-import { PairMetadata } from '../processors/types';
-import { PoolRegistryProducer } from '../processors/pool-registry-producer';
 import { Sync } from '../../events/blockchain/sync';
 import { Decimal } from 'decimal.js';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
+import { MultiPoolPricesMap, PoolDeltas } from '../processors/types';
+import { PoolRegistryConsumer } from './pool-registry-consumer';
+import { PairMetadata } from '../producers/types';
+import { PoolRegistryProducer } from '../producers/pool-registry-producer';
 
 export class MultipoolPriceConsumer {
   registry: PoolRegistryConsumer;

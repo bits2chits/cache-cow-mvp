@@ -15,7 +15,6 @@ export class PriceAggregateProcessor {
   registry: PoolRegistryConsumer;
   producer: KafkaProducer;
   consumer: KafkaConsumer;
-  priceMapperConsumer: KafkaConsumer;
   initialized = false;
   multiPoolPrices: MultiPoolPricesMap = {};
   listeners = new Map<string, (pairs: PricesMap) => void>();
@@ -28,11 +27,6 @@ export class PriceAggregateProcessor {
     this.producer = await ProducerFactory.getProducer();
     this.consumer = await ConsumerFactory.getConsumer({
       topics: [SYSTEM_EVENT_TOPICS.LP_POOL_EVENT_LOGS],
-    }, {
-      groupId: uuid(),
-    });
-    this.priceMapperConsumer = await ConsumerFactory.getConsumer({
-      topics: [SYSTEM_EVENT_TOPICS.TOKEN_PRICE_PER_MINUTE, SYSTEM_EVENT_TOPICS.TOKEN_PRICE_PER_HOUR],
     }, {
       groupId: uuid(),
     });
@@ -86,10 +80,9 @@ export class PriceAggregateProcessor {
 
   async broadcastPriceUpdates(): Promise<void> {
     if (this.listeners.size > 0) {
-      const prices = Object.entries(this.multiPoolPrices)
-        .reduce((acc, [key, pool]) => {
+      const prices = Object.entries(this.multiPoolPrices).reduce((acc, [key, price]) => {
           if (!key.includes(':')) {
-            acc[key] = pool;
+            acc[key] = price;
           }
           return acc;
         }, {});
