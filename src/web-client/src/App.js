@@ -79,8 +79,6 @@ function App() {
                 <TableCell>Token1</TableCell>
                 <TableCell>Token0 price</TableCell>
                 <TableCell>Token1 price</TableCell>
-                <TableCell>Reserve0</TableCell>
-                <TableCell>Reserve1</TableCell>
                 <TableCell>Pools</TableCell>
                 <TableCell>Updated</TableCell>
               </TableRow>
@@ -94,8 +92,6 @@ function App() {
                   <TableCell>{price.token1}</TableCell>
                   <TableCell>{price.token0Price}</TableCell>
                   <TableCell>{price.token1Price}</TableCell>
-                  <TableCell>{price.reserve0}</TableCell>
-                  <TableCell>{price.reserve1}</TableCell>
                   <TableCell>{price.poolSize}</TableCell>
                   <TableCell>{(new Date(price.updated)).toLocaleString()}</TableCell>
                 </TableRow>
