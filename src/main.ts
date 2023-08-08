@@ -10,6 +10,7 @@ import UniswapV3Abi from './abis/uniswap-v3.json'
 import { EventSignature } from './events/blockchain/types';
 import { AdminFactory } from './kafka/admin';
 import { HistoricalPricesProducer } from './server/producers/historical-prices-producer';
+import { StableCoinAggregateProcessor } from './server/processors/stable-coin-aggregate-processor';
 
 async function main(): Promise<void> {
   // initialize admin to create necessary system topics.
@@ -28,6 +29,7 @@ async function main(): Promise<void> {
 
   // Price processors
   const priceAggregateProcessor = new PriceAggregateProcessor(poolRegistryConsumer);
+  const stableCoinAggregateProcessor = new StableCoinAggregateProcessor(poolRegistryConsumer);
 
   // Historical data producers
   const historicalPricesProducer = new HistoricalPricesProducer();
@@ -39,6 +41,7 @@ async function main(): Promise<void> {
     uniswapV3EventProcessor.run(),
     priceAggregateProcessor.run(),
     historicalPricesProducer.run(),
+    stableCoinAggregateProcessor.run(),
     socketServer(priceAggregateProcessor)
   ]);
 }
