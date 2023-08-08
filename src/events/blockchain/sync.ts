@@ -17,8 +17,8 @@ export class Sync extends AbstractEvent {
     const reserve1 = new Decimal(this.get('reserve1').toString())
       .div(new Decimal(10).pow(new Decimal(pair.token1.decimals.toString())));
 
-    const token0Price = reserve0.div(reserve1)
-    const token1Price = reserve1.div(reserve0)
+    const token0Price = reserve1.div(reserve0)
+    const token1Price = reserve0.div(reserve1)
 
     return {
       token0Price: token0Price.toSignificantDigits(5, Decimal.ROUND_HALF_UP),
