@@ -1,11 +1,12 @@
 import { ethers, EventFilter, Interface, JsonRpcProvider, Log, WebSocketProvider } from 'ethers';
-import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
+import { KafkaProducer, KafkaProducerFactory } from '../../kafka/producer';
 import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
 import { ProducerRecord } from 'kafkajs';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { sleep } from '../../libs/sleep';
 import { EventFactory } from '../../events/blockchain/event-factory';
 import { AbstractEvent } from '../../events/blockchain/abstract-event';
+import { container } from 'tsyringe';
 
 export class EventProcessor {
   provider: JsonRpcProvider | WebSocketProvider;
@@ -38,6 +39,7 @@ export class EventProcessor {
   }
 
   async initialize(): Promise<void> {
+    const ProducerFactory = container.resolve<KafkaProducerFactory>(KafkaProducerFactory)
     this.producer = await ProducerFactory.getProducer();
     this.poolAddedOutboxInterval = setInterval(() => this.processPoolAdded(), 1000);
     this.messageOutboxInterval = setInterval(() => this.processMessages(), 100);

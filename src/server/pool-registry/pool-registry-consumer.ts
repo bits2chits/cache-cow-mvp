@@ -1,13 +1,14 @@
 import { ContractRunner } from 'ethers';
-import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
-import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
+import { KafkaProducer, KafkaProducerFactory } from '../../kafka/producer';
+import { KafkaConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { v4 as uuid } from 'uuid';
 import { PairMetadata } from './types';
 import { sleep } from '../../libs/sleep';
+import { container, singleton } from 'tsyringe';
 
+@singleton()
 export class PoolRegistryConsumer {
-  provider: ContractRunner;
   existingPoolAddresses: Set<string> = new Set();
   producer: KafkaProducer;
   consumer: KafkaConsumer;
@@ -16,6 +17,8 @@ export class PoolRegistryConsumer {
   listeners = new Map<string, (pairs: PairMetadata[]) => void>();
 
   async initialize(): Promise<void> {
+    const ProducerFactory = container.resolve<KafkaProducerFactory>(KafkaProducerFactory)
+    const ConsumerFactory = container.resolve<KafkaConsumerFactory>(KafkaConsumerFactory)
     this.producer = await ProducerFactory.getProducer();
     this.consumer = await ConsumerFactory.getConsumer({
       topics: [SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY],

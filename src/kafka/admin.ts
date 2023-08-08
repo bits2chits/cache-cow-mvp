@@ -1,7 +1,9 @@
 import { Admin } from 'kafkajs';
 import { KafkaService, KafkaServiceInstance, SYSTEM_EVENT_TOPICS } from './index';
 import { ethers } from 'ethers';
+import { singleton } from 'tsyringe';
 
+@singleton()
 export class KafkaAdmin {
   kafkaService: KafkaService;
   admin: Admin;

@@ -1,26 +1,20 @@
-import { Chain, RpcCollection } from './enums/rpcs';
+import { CustomRegistry, initContainer } from './container/server';
 import { PoolRegistryProducer } from './server/pool-registry/pool-registry-producer';
 import { PoolRegistryConsumer } from './server/pool-registry/pool-registry-consumer';
 import { EventProcessor } from './server/block-processor/event-processor';
 import { socketServer } from './server/socket-server/socket-server';
 import { PriceAggregateProcessor } from './server/block-processor/price-aggregate-processor';
-import { ethers } from 'ethers';
-import UniswapV2Abi from './abis/uniswap-v2.json'
-import UniswapV3Abi from './abis/uniswap-v3.json'
-import { EventSignature } from './events/blockchain/types';
-import { AdminFactory } from './kafka/admin';
+import { container } from 'tsyringe';
+
 
 async function main(): Promise<void> {
-  const chain = Chain.Polygon;
-  const rpcCollection = new RpcCollection();
-  const provider = rpcCollection.getEthersProvider(chain);
-  const kafkaAdmin = await AdminFactory.getAdmin();
-
-  const registryProducer = new PoolRegistryProducer(provider, kafkaAdmin);
-  const registry = new PoolRegistryConsumer();
-  const uniswapV2EventProcessor = new EventProcessor(provider, registry, EventSignature.Sync, new ethers.Interface(UniswapV2Abi));
-  const uniswapV3EventProcessor = new EventProcessor(provider, registry, EventSignature.SwapV3, new ethers.Interface(UniswapV3Abi));
-  const priceAggregateProcessor = new PriceAggregateProcessor(registry);
+  // resolve all container dependencies
+  await initContainer();
+  const registryProducer = container.resolve<PoolRegistryProducer>(CustomRegistry.PolygonPoolRegistryProducer);
+  const registry = container.resolve<PoolRegistryConsumer>(PoolRegistryConsumer);
+  const uniswapV2EventProcessor = container.resolve<EventProcessor>(CustomRegistry.UniswapV2SyncProcessor);
+  const uniswapV3EventProcessor = container.resolve<EventProcessor>(CustomRegistry.UniswapV3SwapProcessor);
+  const priceAggregateProcessor = container.resolve<PriceAggregateProcessor>(PriceAggregateProcessor);
 
   await Promise.all([
     registryProducer.run(),

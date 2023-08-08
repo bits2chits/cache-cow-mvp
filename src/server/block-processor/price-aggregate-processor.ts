@@ -1,6 +1,6 @@
 import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
-import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
-import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
+import { KafkaProducer, KafkaProducerFactory } from '../../kafka/producer';
+import { KafkaConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { v4 as uuid } from 'uuid';
 import { CalculatedReserves } from '../../events/blockchain/types';
 import { MultiPoolPricesMap, PricesMap } from './types';
@@ -8,21 +8,22 @@ import { PairMetadata } from '../pool-registry/types';
 import { Decimal } from 'decimal.js';
 import { PoolRegistryProducer } from '../pool-registry/pool-registry-producer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
+import { autoInjectable, container, singleton } from 'tsyringe';
 
-
+@autoInjectable()
+@singleton()
 export class PriceAggregateProcessor {
-  registry: PoolRegistryConsumer;
   producer: KafkaProducer;
   consumer: KafkaConsumer;
   initialized = false;
   multiPoolPrices: MultiPoolPricesMap = {};
   listeners = new Map<string, (pairs: PricesMap) => void>();
 
-  constructor(registry: PoolRegistryConsumer) {
-    this.registry = registry;
-  }
+  constructor(private registry?: PoolRegistryConsumer) {}
 
   async initialize(): Promise<void> {
+    const ProducerFactory = container.resolve<KafkaProducerFactory>(KafkaProducerFactory)
+    const ConsumerFactory = container.resolve<KafkaConsumerFactory>(KafkaConsumerFactory)
     this.producer = await ProducerFactory.getProducer();
     this.consumer = await ConsumerFactory.getConsumer({
       topics: [SYSTEM_EVENT_TOPICS.LP_POOL_EVENT_LOGS],

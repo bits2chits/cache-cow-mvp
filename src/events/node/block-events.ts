@@ -10,9 +10,11 @@ import {
   NewBlockListener,
 } from './types';
 import { Log } from 'ethers';
+import { singleton } from "tsyringe";
 
 export class BlockEventEmitter extends EventEmitter {}
 
+@singleton()
 export default class BlockEvents extends BaseEvents<BlockEventsEnum, NewBlockListener | BlockDataListener | LogDataListener | BlockErrorListener> {
 
   constructor() {

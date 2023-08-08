@@ -9,6 +9,7 @@ import {
   Producer,
   ProducerConfig
 } from 'kafkajs'
+import { singleton } from 'tsyringe'
 
 export enum SYSTEM_EVENT_TOPICS {
   LP_POOL_EVENT_LOGS = "pool.events.logs",
@@ -26,7 +27,7 @@ const defaultProducerConfig: ProducerConfig = {
   createPartitioner: Partitioners.DefaultPartitioner
 }
 
-
+@singleton()
 export class KafkaService {
   config: KafkaConfig
   producerConfig: ProducerConfig

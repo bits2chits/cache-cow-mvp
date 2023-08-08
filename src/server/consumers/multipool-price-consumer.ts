@@ -1,6 +1,6 @@
 import { EventFilter } from 'ethers/lib.esm';
 import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
-import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
+import { KafkaConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { MultiPoolPricesMap, PoolDeltas } from '../block-processor/types';
 import { v4 as uuid } from 'uuid';
 import { CalculatedReserves } from '../../events/blockchain/types';
@@ -9,9 +9,11 @@ import { PoolRegistryProducer } from '../pool-registry/pool-registry-producer';
 import { Sync } from '../../events/blockchain/sync';
 import { Decimal } from 'decimal.js';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
+import { autoInjectable, container, singleton } from 'tsyringe';
 
+@autoInjectable()
+@singleton()
 export class MultipoolPriceConsumer {
-  registry: PoolRegistryConsumer;
   filter: EventFilter;
   consumer: KafkaConsumer;
   initialized = false;
@@ -19,11 +21,10 @@ export class MultipoolPriceConsumer {
   poolDeltas: { [key: string]: PoolDeltas } = {};
   listeners = new Map<string, (poolDeltas: { [key: string]: PoolDeltas }) => void>();
 
-  constructor(registry: PoolRegistryConsumer) {
-    this.registry = registry;
-  }
+  constructor(private registry?: PoolRegistryConsumer) {}
 
   async initialize(): Promise<void> {
+    const ConsumerFactory = container.resolve<KafkaConsumerFactory>(KafkaConsumerFactory)
     this.consumer = await ConsumerFactory.getConsumer({
       topics: [SYSTEM_EVENT_TOPICS.LP_POOL_EVENT_LOGS],
       fromBeginning: true,
