@@ -1,5 +1,5 @@
 import { EventFilter } from 'ethers/lib.esm';
-import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
+import { PoolRegistryConsumer } from './pool-registry-consumer';
 import { KafkaConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { v4 as uuid } from 'uuid';
 import { CalculatedReserves } from '../../events/blockchain/types';

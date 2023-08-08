@@ -1,6 +1,6 @@
 import { CustomRegistry, initContainer } from './container/server';
 import { PoolRegistryProducer } from './server/producers/pool-registry-producer';
-import { PoolRegistryConsumer } from './server/pool-registry/pool-registry-consumer';
+import { PoolRegistryConsumer } from './server/consumers/pool-registry-consumer';
 import { EventProcessor } from './server/processors/event-processor';
 import { socketServer } from './server/socket-server/socket-server';
 import { PriceAggregateProcessor } from './server/processors/price-aggregate-processor';

@@ -1,6 +1,6 @@
 import { ethers, EventFilter, Interface, JsonRpcProvider, Log, WebSocketProvider } from 'ethers';
 import { KafkaProducer, KafkaProducerFactory } from '../../kafka/producer';
-import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
+import { PoolRegistryConsumer } from '../consumers/pool-registry-consumer';
 import { ProducerRecord } from 'kafkajs';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { sleep } from '../../libs/sleep';

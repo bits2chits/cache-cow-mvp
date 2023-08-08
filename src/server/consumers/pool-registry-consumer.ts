@@ -6,7 +6,7 @@ import { v4 as uuid } from 'uuid';
 import { sleep } from '../../libs/sleep';
 import { PairMetadata } from '../producers/types';
 import { PoolRegistryProducer } from '../producers/pool-registry-producer';
-import { container } from 'tsyringe';
+import { container, singleton } from 'tsyringe';
 
 const stableCoinSymbols = [
   'USDC', 'USDT', 'DAI', 'USDR', 'BUSD', 'FRAX', 'NUSD',
@@ -14,6 +14,7 @@ const stableCoinSymbols = [
   'DUSD', 'DOLA', 'USDK', 'NXUSD', 'LUSD', 'MAI',
 ];
 
+@singleton()
 export class PoolRegistryConsumer {
   provider: ContractRunner;
   existingPoolAddresses: Set<string> = new Set();

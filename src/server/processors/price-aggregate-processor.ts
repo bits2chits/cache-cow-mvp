@@ -1,4 +1,4 @@
-import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
+import { PoolRegistryConsumer } from '../consumers/pool-registry-consumer';
 import { KafkaProducer, KafkaProducerFactory } from '../../kafka/producer';
 import { KafkaConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { v4 as uuid } from 'uuid';

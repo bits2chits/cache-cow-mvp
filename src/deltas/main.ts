@@ -1,5 +1,5 @@
 import { initContainer } from '../container/server';
-import { PoolRegistryConsumer } from '../server/pool-registry/pool-registry-consumer';
+import { PoolRegistryConsumer } from '../server/consumers/pool-registry-consumer';
 import { MultipoolPriceConsumer } from '../server/consumers/multipool-price-consumer';
 import { socketServer } from './socket-server';
 import { container } from 'tsyringe';
