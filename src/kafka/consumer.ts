@@ -1,6 +1,6 @@
 import {Consumer, ConsumerConfig, ConsumerSubscribeTopics, ConsumerRunConfig} from "kafkajs"
-import {KafkaService, KafkaServiceInstance} from "./index"
-import { singleton } from "tsyringe"
+import {KafkaService} from "./index"
+import { container, singleton } from "tsyringe"
 
 export class KafkaConsumer {
   kafkaService: KafkaService
@@ -47,6 +47,7 @@ export class KafkaConsumer {
 @singleton()
 export class KafkaConsumerFactory {
   async getConsumer(subscriptionConfig: ConsumerSubscribeTopics, consumerConfig?: ConsumerConfig): Promise<KafkaConsumer> {
+    const KafkaServiceInstance = container.resolve<KafkaService>(KafkaService)
     const consumer = new KafkaConsumer(KafkaServiceInstance)
     await consumer.initialize(subscriptionConfig, consumerConfig)
     return consumer

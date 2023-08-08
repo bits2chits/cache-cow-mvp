@@ -1,16 +1,17 @@
 /* reflect-metadata is required for tsyringe */
 import 'reflect-metadata';
 import { Chain, RpcCollection } from '../enums/rpcs';
-import { PoolRegistryProducer } from '../server/pool-registry/pool-registry-producer';
+import { PoolRegistryProducer } from '../server/producers/pool-registry-producer';
 import { PoolRegistryConsumer } from '../server/pool-registry/pool-registry-consumer';
-import { EventProcessor } from '../server/block-processor/event-processor';
+import { EventProcessor } from '../server/processors/event-processor';
 import { ContractRunner, JsonRpcProvider, WebSocketProvider, ethers } from 'ethers';
 import UniswapV2Abi from '../abis/uniswap-v2.json'
 import UniswapV3Abi from '../abis/uniswap-v3.json'
 import Erc20Abi from '../abis/erc20.json';
 import { EventSignature } from '../events/blockchain/types';
-import { AdminFactory, KafkaAdmin } from '../kafka/admin';
+import { KafkaAdmin } from '../kafka/admin';
 import { container } from 'tsyringe';
+import { KafkaService } from '../kafka';
 
 export enum CustomRegistry {
   PolygonRPCProvider = 'PolygonRPCProvider',
@@ -25,26 +26,40 @@ export enum CustomRegistry {
 
 // this is to initialize async dependencies specifically since tsyringe doesn't have a way to do it
 export async function initContainer(): Promise<void> {
+  // bootstrap kafka topics
+  container.register<KafkaAdmin>(KafkaAdmin, {
+    useFactory: (c) => {
+      const service = c.resolve<KafkaService>(KafkaService)
+      return new KafkaAdmin(service)
+    }
+  })
+  const kadmin = container.resolve<KafkaAdmin>(KafkaAdmin)
+  await kadmin.getInstance()
+
+  // abi interfaces
   container.register<ethers.Interface>(CustomRegistry.UniswapV2Interface, { useValue: new ethers.Interface(UniswapV2Abi) })
   container.register<ethers.Interface>(CustomRegistry.UniswapV3Interface, { useValue: new ethers.Interface(UniswapV3Abi) })
   container.register<ethers.Interface>(CustomRegistry.Erc20Interface, { useValue: new ethers.Interface(Erc20Abi) })
+
+  // ethers provider for polygon
   container.register<ContractRunner | (JsonRpcProvider | WebSocketProvider)>(CustomRegistry.PolygonRPCProvider, {
     useFactory: (c) => {
       const rpcCollection = c.resolve(RpcCollection)
       return rpcCollection.getEthersProvider(Chain.Polygon)
     }
   })
-  const admin = await AdminFactory.getAdmin()
-  container.register<KafkaAdmin>(CustomRegistry.KafkaAdmin, { useValue: admin })
+
+  // polygon pool registry
   container.register(CustomRegistry.PolygonPoolRegistryProducer, {
     useFactory: (c) => {
       const provider = c.resolve<ContractRunner>(CustomRegistry.PolygonRPCProvider)
-      const admin = c.resolve<KafkaAdmin>(CustomRegistry.KafkaAdmin)
       const uniswapV2Interface = c.resolve<ethers.Interface>(CustomRegistry.UniswapV2Interface)
       const erc20Interface = c.resolve<ethers.Interface>(CustomRegistry.Erc20Interface)
-      return new PoolRegistryProducer(provider, admin, uniswapV2Interface, erc20Interface)
+      return new PoolRegistryProducer(provider, uniswapV2Interface, erc20Interface)
     }
   })
+
+  // uniswap processors
   container.register(CustomRegistry.UniswapV2SyncProcessor, {
     useFactory: (c) => {
       const provider = c.resolve<JsonRpcProvider | WebSocketProvider>(CustomRegistry.PolygonRPCProvider)

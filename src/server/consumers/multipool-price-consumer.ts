@@ -1,15 +1,15 @@
 import { EventFilter } from 'ethers/lib.esm';
 import { PoolRegistryConsumer } from '../pool-registry/pool-registry-consumer';
 import { KafkaConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
-import { MultiPoolPricesMap, PoolDeltas } from '../block-processor/types';
 import { v4 as uuid } from 'uuid';
 import { CalculatedReserves } from '../../events/blockchain/types';
-import { PairMetadata } from '../pool-registry/types';
-import { PoolRegistryProducer } from '../pool-registry/pool-registry-producer';
 import { Sync } from '../../events/blockchain/sync';
 import { Decimal } from 'decimal.js';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { autoInjectable, container, singleton } from 'tsyringe';
+import { MultiPoolPricesMap, PoolDeltas } from '../processors/types';
+import { PairMetadata } from '../producers/types';
+import { PoolRegistryProducer } from '../producers/pool-registry-producer';
 
 @autoInjectable()
 @singleton()

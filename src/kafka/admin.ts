@@ -1,9 +1,7 @@
 import { Admin } from 'kafkajs';
-import { KafkaService, KafkaServiceInstance, SYSTEM_EVENT_TOPICS } from './index';
+import { KafkaService, SYSTEM_EVENT_TOPICS } from './index';
 import { ethers } from 'ethers';
-import { singleton } from 'tsyringe';
 
-@singleton()
 export class KafkaAdmin {
   kafkaService: KafkaService;
   admin: Admin;
@@ -70,22 +68,7 @@ export class KafkaAdmin {
     return admin.listTopics();
   }
 
-  async getPriceTopics(): Promise<string[]> {
-    const topics = await this.admin.listTopics()
-    return topics.filter((topic) => topic.startsWith('prices.'));
-  }
-
   async disconnect(): Promise<void> {
     await this.admin?.disconnect();
   }
 }
-
-class KafkaAdminFactory {
-  async getAdmin(): Promise<KafkaAdmin> {
-    const admin = new KafkaAdmin(KafkaServiceInstance);
-    await admin.getInstance();
-    return admin;
-  }
-}
-
-export const AdminFactory = new KafkaAdminFactory();

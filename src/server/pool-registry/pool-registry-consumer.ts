@@ -1,9 +1,8 @@
-import { ContractRunner } from 'ethers';
 import { KafkaProducer, KafkaProducerFactory } from '../../kafka/producer';
 import { KafkaConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { v4 as uuid } from 'uuid';
-import { PairMetadata } from './types';
+import { PairMetadata } from '../producers/types';
 import { sleep } from '../../libs/sleep';
 import { container, singleton } from 'tsyringe';
 

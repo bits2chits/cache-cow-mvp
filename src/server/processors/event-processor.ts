@@ -15,11 +15,11 @@ export class EventProcessor {
   eventSignature: string;
   filter: EventFilter;
   producer: KafkaProducer;
+  poolAddedOutbox: Map<string, Log> = new Map();
+  messageOutbox: ProducerRecord[] = [];
   poolAddedOutboxInterval: NodeJS.Timer;
   messageOutboxInterval: NodeJS.Timer;
   initialized = false;
-  poolAddedOutbox: Map<string, Log> = new Map();
-  messageOutbox: ProducerRecord[] = [];
   shuttingDown = false;
 
   constructor(
@@ -52,7 +52,7 @@ export class EventProcessor {
     }
     const pair = await this.registry.getPairMetadata(log.address);
     if (pair === undefined) {
-      console.info(`Pair data was not available. Registering new pair on address: ${log.address}`)
+      console.info(`Registering new pair on address: ${log.address}`)
       this.poolAddedOutbox.set(log.address, log);
       return;
     }
@@ -60,7 +60,6 @@ export class EventProcessor {
     const parsedLog = this.poolInterface.parseLog({ topics: Array.from(log.topics), data: log.data });
     const event = EventFactory.getEvent<AbstractEvent>(
       this.eventSignature, {
-        address: log.address,
         pair,
         log,
         parsedLog: parsedLog,
@@ -78,7 +77,7 @@ export class EventProcessor {
 
   async processMessages(): Promise<void> {
     for (let i = 0; i < this.messageOutbox.length; i++) {
-      console.info(`Processing message ${i + 1}`);
+      console.info(`Processing message outbox with ${i + 1} messages.`);
       const message = this.messageOutbox.shift();
       try {
         await this.producer.send(message);

@@ -1,3 +1,5 @@
+
+
 import { CalculatedReserves } from '../../events/blockchain/types';
 import { Decimal } from 'decimal.js';
 
@@ -26,3 +28,4 @@ export interface PoolDeltas {
 export interface PricesMapWithDeltas {
   [key: string]: CalculatedReserves & PoolDeltas
 }
+
