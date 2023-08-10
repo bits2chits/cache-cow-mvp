@@ -3,7 +3,7 @@ import { Server, Socket } from 'socket.io';
 import express, { Server as ExpressServer } from 'express';
 import * as http from 'http';
 import { MultipoolPriceConsumer } from '../server/consumers/multipool-price-consumer';
-import { PoolDeltas } from '../server/block-processor/types';
+import { PoolDeltas } from '../server/processors/types';
 import { FrontendPoolDeltas, SocketEvents } from '../server/socket-server/types';
 
 
