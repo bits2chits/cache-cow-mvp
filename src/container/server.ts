@@ -20,12 +20,13 @@ export enum CustomRegistry {
   UniswapV3SwapProcessor = 'UniswapV3SwapProcessor',
   PolygonPoolRegistryProducer = 'PolygonPoolRegistryProducer',
   UniswapV2Interface = 'UniswapV2Interface',
-  UniswapV3Interface = 'UniswapV2Interface',
+  UniswapV3Interface = 'UniswapV3Interface',
   Erc20Interface = 'Erc20Interface',
 }
 
 // this is to initialize async dependencies specifically since tsyringe doesn't have a way to do it
 export async function initContainer(): Promise<void> {
+  container.register<KafkaService>(KafkaService, { useValue: new KafkaService() })
   // bootstrap kafka topics
   container.register<KafkaAdmin>(KafkaAdmin, {
     useFactory: (c) => {
