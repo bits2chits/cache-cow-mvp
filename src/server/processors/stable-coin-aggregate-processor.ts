@@ -1,5 +1,5 @@
-import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
-import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
+import { KafkaProducer, KafkaProducerFactory } from '../../kafka/producer';
+import { KafkaConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { v4 as uuid } from 'uuid';
 import { PoolRegistryConsumer } from '../consumers/pool-registry-consumer';
@@ -9,19 +9,21 @@ import { PricesMap } from './types';
 import { PoolRegistryProducer } from '../producers/pool-registry-producer';
 import { Decimal } from 'decimal.js';
 import { HistoricalPricesProducer } from '../producers/historical-prices-producer';
+import { autoInjectable, container, singleton } from 'tsyringe';
 
+@autoInjectable()
+@singleton()
 export class StableCoinAggregateProcessor {
-  registry: PoolRegistryConsumer;
   producer: KafkaProducer;
   consumer: KafkaConsumer;
   prices: PricesMap = {};
   initialized = false;
 
-  constructor(registry: PoolRegistryConsumer) {
-    this.registry = registry;
-  }
+  constructor(private registry?: PoolRegistryConsumer) {}
 
   async initialize(): Promise<void> {
+    const ProducerFactory = container.resolve<KafkaProducerFactory>(KafkaProducerFactory)
+    const ConsumerFactory = container.resolve<KafkaConsumerFactory>(KafkaConsumerFactory)
     this.producer = await ProducerFactory.getProducer();
     this.consumer = await ConsumerFactory.getConsumer({
       topics: [SYSTEM_EVENT_TOPICS.TOKEN_PRICE_PER_MINUTE],

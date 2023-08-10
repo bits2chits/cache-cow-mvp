@@ -1,12 +1,11 @@
 import { ContractRunner, ethers, Interface, Log } from 'ethers';
-import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
-import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
+import { KafkaConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
+import { KafkaProducer, KafkaProducerFactory } from '../../kafka/producer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { v4 as uuid } from 'uuid';
 import { KafkaMessage } from 'kafkajs';
-import UniswapV2Abi from '../../abis/uniswap-v2.json';
-import Erc20Abi from '../../abis/erc20.json';
 import { Erc20Metadata, PairMetadata } from './types';
+import { container } from 'tsyringe';
 
 export class PoolRegistryProducer {
   provider: ContractRunner;
@@ -16,13 +15,15 @@ export class PoolRegistryProducer {
   consumer: KafkaConsumer;
   initialized = false;
 
-  constructor(provider: ContractRunner) {
+  constructor(provider: ContractRunner, uniswapV2Interface: Interface, erc20Interface: Interface) {
     this.provider = provider;
-    this.uniswapV2Interface = new ethers.Interface(UniswapV2Abi);
-    this.erc20Interface = new ethers.Interface(Erc20Abi);
+    this.uniswapV2Interface = uniswapV2Interface;
+    this.erc20Interface = erc20Interface;
   }
 
   async initialize(): Promise<void> {
+    const ProducerFactory = container.resolve<KafkaProducerFactory>(KafkaProducerFactory)
+    const ConsumerFactory = container.resolve<KafkaConsumerFactory>(KafkaConsumerFactory)
     this.producer = await ProducerFactory.getProducer();
     this.consumer = await ConsumerFactory.getConsumer({
       topics: [SYSTEM_EVENT_TOPICS.LP_POOL_ADDED],

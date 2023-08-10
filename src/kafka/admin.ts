@@ -1,5 +1,5 @@
 import { Admin } from 'kafkajs';
-import { KafkaService, KafkaServiceInstance, SYSTEM_EVENT_TOPICS } from './index';
+import { KafkaService, SYSTEM_EVENT_TOPICS } from './index';
 import { ethers } from 'ethers';
 
 export class KafkaAdmin {
@@ -72,13 +72,3 @@ export class KafkaAdmin {
     await this.admin?.disconnect();
   }
 }
-
-class KafkaAdminFactory {
-  async getAdmin(): Promise<KafkaAdmin> {
-    const admin = new KafkaAdmin(KafkaServiceInstance);
-    await admin.getInstance();
-    return admin;
-  }
-}
-
-export const AdminFactory = new KafkaAdminFactory();

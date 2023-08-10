@@ -2,9 +2,11 @@ import { Sync } from './sync';
 import { AbstractEvent } from './abstract-event';
 import { Swap } from './swap';
 import { EventArgs, EventSignature } from './types';
+import { singleton } from 'tsyringe';
 import { PairCreated } from './pair-created';
 
-class ChainEventFactory {
+@singleton()
+export class ChainEventFactory {
   getEvent<T extends AbstractEvent>(signature: string | symbol, args: EventArgs): T {
     switch (signature) {
       case EventSignature.Sync:

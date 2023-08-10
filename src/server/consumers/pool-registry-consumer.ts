@@ -1,11 +1,12 @@
 import { ContractRunner } from 'ethers';
-import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
-import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
+import { KafkaProducer, KafkaProducerFactory } from '../../kafka/producer';
+import { KafkaConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { v4 as uuid } from 'uuid';
 import { sleep } from '../../libs/sleep';
 import { PairMetadata } from '../producers/types';
 import { PoolRegistryProducer } from '../producers/pool-registry-producer';
+import { container, singleton } from 'tsyringe';
 
 const stableCoinSymbols = [
   'USDC', 'USDT', 'DAI', 'USDR', 'BUSD', 'FRAX', 'NUSD',
@@ -13,6 +14,7 @@ const stableCoinSymbols = [
   'DUSD', 'DOLA', 'USDK', 'NXUSD', 'LUSD', 'MAI',
 ];
 
+@singleton()
 export class PoolRegistryConsumer {
   provider: ContractRunner;
   existingPoolAddresses: Set<string> = new Set();
@@ -25,6 +27,8 @@ export class PoolRegistryConsumer {
   listeners = new Map<string, (pairs: PairMetadata[]) => void>();
 
   async initialize(): Promise<void> {
+    const ProducerFactory = container.resolve<KafkaProducerFactory>(KafkaProducerFactory)
+    const ConsumerFactory = container.resolve<KafkaConsumerFactory>(KafkaConsumerFactory)
     this.producer = await ProducerFactory.getProducer();
     this.consumer = await ConsumerFactory.getConsumer({
       topics: [SYSTEM_EVENT_TOPICS.LP_POOL_REGISTRY],

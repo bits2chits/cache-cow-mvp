@@ -1,10 +1,13 @@
-import { PoolRegistryConsumer } from '../server/processors/pool-registry-consumer';
+import { initContainer } from '../container/server';
+import { PoolRegistryConsumer } from '../server/consumers/pool-registry-consumer';
 import { MultipoolPriceConsumer } from '../server/consumers/multipool-price-consumer';
 import { socketServer } from './socket-server';
+import { container } from 'tsyringe';
 
 async function main(): Promise<void> {
-  const registry = new PoolRegistryConsumer();
-  const multiPoolPriceConsumer = new MultipoolPriceConsumer(registry);
+  await initContainer()
+  const registry = container.resolve<PoolRegistryConsumer>(PoolRegistryConsumer);
+  const multiPoolPriceConsumer = container.resolve<MultipoolPriceConsumer>(MultipoolPriceConsumer);
 
   await Promise.all([
     registry.run(),

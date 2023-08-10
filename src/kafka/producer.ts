@@ -1,5 +1,6 @@
 import {Producer, ProducerBatch, ProducerConfig, ProducerRecord, RecordMetadata} from "kafkajs"
-import {KafkaService, KafkaServiceInstance} from "./index"
+import {KafkaService} from "./index"
+import { container, singleton } from "tsyringe"
 
 export class KafkaProducer {
   kafkaService: KafkaService
@@ -40,12 +41,12 @@ export class KafkaProducer {
   }
 }
 
-class KafkaProducerFactory {
+@singleton()
+export class KafkaProducerFactory {
   async getProducer(producerConfig?: ProducerConfig): Promise<KafkaProducer> {
+    const KafkaServiceInstance = container.resolve<KafkaService>(KafkaService)
     const producer = new KafkaProducer(KafkaServiceInstance, producerConfig)
     await producer.initialize()
     return producer
   }
 }
-
-export const ProducerFactory = new KafkaProducerFactory()

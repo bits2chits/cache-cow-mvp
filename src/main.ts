@@ -1,38 +1,30 @@
-import { Chain, RpcCollection } from './enums/rpcs';
-import { EventProcessor } from './server/processors/event-processor';
+import { CustomRegistry, initContainer } from './container/server';
 import { PoolRegistryProducer } from './server/producers/pool-registry-producer';
-import { PriceAggregateProcessor } from './server/processors/price-aggregate-processor';
 import { PoolRegistryConsumer } from './server/consumers/pool-registry-consumer';
+import { EventProcessor } from './server/processors/event-processor';
 import { socketServer } from './server/socket-server/socket-server';
-import { ethers } from 'ethers';
-import UniswapV2Abi from './abis/uniswap-v2.json'
-import UniswapV3Abi from './abis/uniswap-v3.json'
-import { EventSignature } from './events/blockchain/types';
-import { AdminFactory } from './kafka/admin';
-import { HistoricalPricesProducer } from './server/producers/historical-prices-producer';
+import { PriceAggregateProcessor } from './server/processors/price-aggregate-processor';
+import { container } from 'tsyringe';
 import { StableCoinAggregateProcessor } from './server/processors/stable-coin-aggregate-processor';
+import { HistoricalPricesProducer } from './server/producers/historical-prices-producer';
+
 
 async function main(): Promise<void> {
-  // initialize admin to create necessary system topics.
-  await AdminFactory.getAdmin();
-  const chain = Chain.Polygon;
-  const rpcCollection = new RpcCollection();
-  const provider = rpcCollection.getEthersProvider(chain);
-
+  // resolve all container dependencies
+  await initContainer();
   // LP Pool registry
-  const poolRegistryProducer = new PoolRegistryProducer(provider);
-  const poolRegistryConsumer = new PoolRegistryConsumer();
+  const poolRegistryProducer = container.resolve<PoolRegistryProducer>(CustomRegistry.PolygonPoolRegistryProducer);
+  const poolRegistryConsumer = container.resolve<PoolRegistryConsumer>(PoolRegistryConsumer);
 
   // Event processors
-  const uniswapV2EventProcessor = new EventProcessor(provider, poolRegistryConsumer, EventSignature.Sync, new ethers.Interface(UniswapV2Abi));
-  const uniswapV3EventProcessor = new EventProcessor(provider, poolRegistryConsumer, EventSignature.SwapV3, new ethers.Interface(UniswapV3Abi));
+  const uniswapV2EventProcessor = container.resolve<EventProcessor>(CustomRegistry.UniswapV2SyncProcessor);
+  const uniswapV3EventProcessor = container.resolve<EventProcessor>(CustomRegistry.UniswapV3SwapProcessor);
 
   // Price processors
-  const priceAggregateProcessor = new PriceAggregateProcessor(poolRegistryConsumer);
-  const stableCoinAggregateProcessor = new StableCoinAggregateProcessor(poolRegistryConsumer);
-
+  const priceAggregateProcessor = container.resolve<PriceAggregateProcessor>(PriceAggregateProcessor);
+  const stableCoinAggregateProcessor = container.resolve<StableCoinAggregateProcessor>(StableCoinAggregateProcessor);
   // Historical data producers
-  const historicalPricesProducer = new HistoricalPricesProducer();
+  const historicalPricesProducer = container.resolve<HistoricalPricesProducer>(HistoricalPricesProducer);
 
   await Promise.all([
     poolRegistryProducer.run(),

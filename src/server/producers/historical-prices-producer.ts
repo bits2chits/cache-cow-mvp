@@ -1,16 +1,19 @@
-import { KafkaProducer, ProducerFactory } from '../../kafka/producer';
-import { ConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
+import { KafkaProducer, KafkaProducerFactory } from '../../kafka/producer';
+import { KafkaConsumerFactory, KafkaConsumer } from '../../kafka/consumer';
 import { SYSTEM_EVENT_TOPICS } from '../../kafka';
 import { v4 as uuid } from 'uuid';
 import { KafkaMessage } from 'kafkajs';
+import { container, singleton } from 'tsyringe';
 
-
+@singleton()
 export class HistoricalPricesProducer {
   producer: KafkaProducer;
   consumer: KafkaConsumer;
   initialized = false;
 
   async initialize(): Promise<void> {
+    const ProducerFactory = container.resolve<KafkaProducerFactory>(KafkaProducerFactory)
+    const ConsumerFactory = container.resolve<KafkaConsumerFactory>(KafkaConsumerFactory)
     this.producer = await ProducerFactory.getProducer();
     this.consumer = await ConsumerFactory.getConsumer({
       topics: [SYSTEM_EVENT_TOPICS.TOKEN_PRICE_PER_MINUTE],

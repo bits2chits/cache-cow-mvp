@@ -7,9 +7,8 @@ import {
   ConsumerConfig,
   Partitioners,
   Producer,
-  ProducerConfig,
-} from 'kafkajs';
-
+  ProducerConfig
+} from 'kafkajs'
 
 export enum SYSTEM_EVENT_TOPICS {
   LP_POOL_EVENT_LOGS = 'pool.events.logs',
@@ -30,7 +29,6 @@ const defaultKafkaConfig = {
 const defaultProducerConfig: ProducerConfig = {
   createPartitioner: Partitioners.DefaultPartitioner,
 };
-
 
 export class KafkaService {
   config: KafkaConfig;
@@ -61,6 +59,3 @@ export class KafkaService {
     return this.kafka.producer(config);
   }
 }
-
-const kafkaServiceInstance = new KafkaService();
-export const KafkaServiceInstance = kafkaServiceInstance;
